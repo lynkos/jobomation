@@ -1,5 +1,9 @@
 # Jobomation
-OpenCode plugin for automatic job application.
+
+<div align="center">
+  <p>OpenCode plugin for automatic job application.</p>
+  <img src="assets/pipeline.svg" alt="Pipeline"/>
+</div>
 
 ## Requirements
 - [x] OpenCode
