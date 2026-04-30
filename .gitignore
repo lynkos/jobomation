@@ -1,4 +1,5 @@
 .vscode
 config
+db
 dist
 node_modules
