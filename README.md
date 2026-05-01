@@ -18,6 +18,7 @@
 2. Install dependencies
    ```sh
    npm install
+   npx playwright install
    npm run setup-browser
    npm run build
    ```
