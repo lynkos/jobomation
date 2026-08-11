@@ -29,6 +29,11 @@ Fetch job postings from Greenhouse and add to [SQLite Database](data/jobomation.
    python -m jobomation.main
    ```
 
+Run dashboard
+    ```sh
+    python -m jobomation.dashboard.app
+    ```
+
 ## Miscellaneous
 ### Design Doc
 See [Design Doc](DESIGN.md) for more details.
@@ -53,6 +58,9 @@ See [Design Doc](DESIGN.md) for more details.
 │       ├── collectors/
 │       │   ├── __init__.py
 │       │   └── greenhouse.py
+│       ├── dashboard/
+│       │   ├── __init__.py
+│       │   └── app.py
 │       ├── db/
 │       │   ├── __init__.py
 │       │   ├── connection.py
