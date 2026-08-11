@@ -10,7 +10,7 @@ class Job:
     location: str
     url: str
     first_published: str
-    updated_at: str
+    updated_at: str | None
     description: str
     first_seen_at: datetime | None = None
     last_seen_at: datetime | None = None
