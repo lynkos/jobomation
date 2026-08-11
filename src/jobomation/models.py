@@ -15,3 +15,9 @@ class Job:
     first_seen_at: datetime | None = None
     last_seen_at: datetime | None = None
     active: bool = True
+
+@dataclass
+class CompanyConfig:
+    name: str
+    source_type: str
+    board_id: str

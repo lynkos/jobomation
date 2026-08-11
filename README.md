@@ -24,7 +24,7 @@ Jobomation is a local-first tool for discovering, evaluating, and managing job o
    ```
 
 ## Usage
-Fetch job postings from Greenhouse and add to [SQLite Database](data/jobomation.db)
+Fetch job postings from [companies](config/companies.yml) and add to [SQLite database](data/jobomation.db)
    ```sh
    python -m jobomation.main
    ```
@@ -51,6 +51,8 @@ See [Design Doc](DESIGN.md) for more details.
 │   ├── pipeline.svg
 │   ├── schema.drawio
 │   └── schema.svg
+├── config/
+│   └── companies.yml
 ├── data/
 │   └── jobomation.db
 ├── src/
@@ -68,6 +70,7 @@ See [Design Doc](DESIGN.md) for more details.
 │       │   ├── repository.py
 │       │   └── schema.py
 │       ├── __init__.py
+│       ├── config.py
 │       ├── main.py
 │       └── models.py
 ├── .gitignore

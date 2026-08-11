@@ -29,7 +29,8 @@ dependencies = [
     "beautifulsoup4==4.15.0",
     "httpx==0.28.1",
     "dash==4.4.1",
-    "dash-ag-grid==35.3.0"
+    "dash-ag-grid==35.3.0",
+    "pyyaml==6.0.3"
 ]
 
 [project.urls]
