@@ -28,7 +28,7 @@ def fetch_job(board: str, job_id: int) -> Job:
             url=raw_job["absolute_url"],
             first_published=raw_job["first_published"],
             updated_at=raw_job["updated_at"],
-            description=clean_description(raw_job["content"]),
+            description=clean_description(raw_job["content"])
         )
 
 # All currently published jobs
@@ -53,7 +53,7 @@ def fetch_jobs(board: str) -> list[Job]:
             url=raw["absolute_url"],
             first_published=raw["first_published"],
             updated_at=raw["updated_at"],
-            description=clean_description(raw["content"]),
+            description=clean_description(raw["content"])
         )
         for raw in raw_jobs
     ]
