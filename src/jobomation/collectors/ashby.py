@@ -29,16 +29,3 @@ def fetch_jobs(board: str) -> list[Job]:
     raw_jobs = response.json()["jobs"]
 
     return [_raw_to_job(board, raw) for raw in raw_jobs]
-
-
-def fetch_job(board: str, job_id: str) -> Job | None:
-    jobs = fetch_jobs(board)
-
-    return next(
-        (
-            job
-            for job in jobs
-            if job.source_job_id == str(job_id)
-        ),
-        None,
-    )
