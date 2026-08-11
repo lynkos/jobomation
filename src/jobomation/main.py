@@ -1,13 +1,7 @@
-from jobomation.collectors.ashby import fetch_jobs as fetch_ashby_jobs
-from jobomation.collectors.greenhouse import fetch_jobs as fetch_greenhouse_jobs
+from jobomation.collectors import COLLECTORS
 from jobomation.config import load_companies
 from jobomation.db.repository import save_job, save_jobs, get_job, get_jobs, count_jobs
 from jobomation.db.schema import initialize_database
-
-COLLECTORS = {
-    "greenhouse": fetch_greenhouse_jobs,
-    "ashby": fetch_ashby_jobs,
-}
 
 def main() -> None:
     initialize_database()
