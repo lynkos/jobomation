@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jobomation"
+version = "0.1.0"
+description = "Local-first job discovery, scraping, and application management tool"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Kiran Brahmatewari", email = "lynkos@admin.com" }]
+keywords = [
+    "jobs",
+    "job",
+    "job-search",
+    "scraping",
+    "automation",
+    "python",
+    "work"
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.14"
+dependencies = [
+    "beautifulsoup4==4.15.0",
+    "httpx==0.28.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/lynkos/jobomation"
+Repository = "https://github.com/lynkos/jobomation"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jobomation"]

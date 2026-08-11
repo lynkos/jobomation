@@ -6,11 +6,4 @@ dependencies:
   - pip
   - sqlite
   - pip:
-      - sqlalchemy
-      - pydantic
-      - pydantic-settings
-      - httpx==0.28.1
-      - beautifulsoup4==4.15.0
-      - lxml
-      - python-dotenv
-      - pytest
+    - -e .
