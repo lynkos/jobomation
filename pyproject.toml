@@ -32,7 +32,8 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/lynkos/jobomation"
-Repository = "https://github.com/lynkos/jobomation"
+Repository = "https://github.com/lynkos/jobomation.git"
+Issues = "https://github.com/lynkos/jobomation/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jobomation"]
