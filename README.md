@@ -30,9 +30,9 @@ Fetch job postings from Greenhouse and add to [SQLite Database](data/jobomation.
    ```
 
 Run dashboard
-    ```sh
-    python -m jobomation.dashboard.app
-    ```
+   ```sh
+   python -m jobomation.dashboard.app
+   ```
 
 ## Miscellaneous
 ### Design Doc
