@@ -12,7 +12,7 @@ def clean_description(content: str) -> str:
     return soup.get_text(separator="\n", strip=True)
 
 # Fetch job by ID
-def fetch_job(board: str, job_id: int) -> Job:
+def fetch_job(board: str, job_id: int | str) -> Job:
     url = f"{JOB_COLLECTOR_URL}/{board}/jobs/{job_id}"
 
     response = httpx.get(url)
