@@ -1,7 +1,7 @@
 import httpx
 import html
 from bs4 import BeautifulSoup
-from src.models import Job
+from jobomation.models import Job
 
 def clean_description(content: str) -> str:
     decoded = html.unescape(content)
@@ -54,12 +54,12 @@ def fetch_jobs(board: str) -> list[Job]:
         for raw in raw_jobs
     ]
 
-# Get all DoorDash jobs
-jobs = fetch_jobs("doordashusa")
+# # Get all DoorDash jobs
+# jobs = fetch_jobs("doordashusa")
 
-print(f"Found {len(jobs)} jobs")
-first_job = jobs[0]
-print(first_job.job_id)
+# print(f"Found {len(jobs)} jobs")
+# first_job = jobs[0]
+# print(first_job.job_id)
 
 # Get specific DoorDash job
 job = fetch_job("doordashusa", 7263610)
