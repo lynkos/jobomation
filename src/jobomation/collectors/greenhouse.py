@@ -3,6 +3,9 @@ import html
 from bs4 import BeautifulSoup
 from jobomation.models import Job
 
+JOB_COLLECTOR_NAME = "greenhouse"
+JOB_COLLECTOR_URL = "https://boards-api.greenhouse.io/v1/boards"
+
 def clean_description(content: str) -> str:
     decoded = html.unescape(content)
     soup = BeautifulSoup(decoded, "html.parser")
@@ -10,15 +13,15 @@ def clean_description(content: str) -> str:
 
 # Fetch job by ID
 def fetch_job(board: str, job_id: int) -> Job:
-    url = f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs/{job_id}"
+    url = f"{JOB_COLLECTOR_URL}/{board}/jobs/{job_id}"
 
     response = httpx.get(url)
     response.raise_for_status()
-
     raw_job = response.json()
 
     return Job(
-            job_id=raw_job["id"],
+            source=JOB_COLLECTOR_NAME,
+            source_job_id=str(raw_job["id"]),
             title=raw_job["title"],
             company=raw_job["company_name"],
             location=raw_job["location"]["name"],
@@ -30,7 +33,7 @@ def fetch_job(board: str, job_id: int) -> Job:
 
 # All currently published jobs
 def fetch_jobs(board: str) -> list[Job]:
-    url = f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs"
+    url = f"{JOB_COLLECTOR_URL}/{board}/jobs"
 
     response = httpx.get(
         url,
@@ -42,7 +45,8 @@ def fetch_jobs(board: str) -> list[Job]:
 
     return [
         Job(
-            job_id=raw["id"],
+            source=JOB_COLLECTOR_NAME,
+            source_job_id=str(raw["id"]),
             title=raw["title"],
             company=raw["company_name"],
             location=raw["location"]["name"],
@@ -53,16 +57,3 @@ def fetch_jobs(board: str) -> list[Job]:
         )
         for raw in raw_jobs
     ]
-
-# # Get all DoorDash jobs
-# jobs = fetch_jobs("doordashusa")
-
-# print(f"Found {len(jobs)} jobs")
-# first_job = jobs[0]
-# print(first_job.job_id)
-
-# Get specific DoorDash job
-job = fetch_job("doordashusa", 7263610)
-
-print(job.title)
-print(job.location)
