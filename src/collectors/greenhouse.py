@@ -1,41 +1,68 @@
 import httpx
-import json
+import html
+from bs4 import BeautifulSoup
+from src.models import Job
 
-# ## All currently published DoorDash jobs
-# url = "https://boards-api.greenhouse.io/v1/boards/doordashusa/jobs"
+def clean_description(content: str) -> str:
+    decoded = html.unescape(content)
+    soup = BeautifulSoup(decoded, "html.parser")
+    return soup.get_text(separator="\n", strip=True)
 
-# response = httpx.get(url)
-# response.raise_for_status()
+# Fetch job by ID
+def fetch_job(board: str, job_id: int) -> Job:
+    url = f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs/{job_id}"
 
-# jobs = response.json()["jobs"]
+    response = httpx.get(url)
+    response.raise_for_status()
 
-# for job in jobs:
-#     print(job["id"], job["title"], job["location"]["name"])
+    raw_job = response.json()
 
-# # Specific job with ID 7263610
-# url = "https://boards-api.greenhouse.io/v1/boards/doordashusa/jobs/7263610"
+    return Job(
+            job_id=raw_job["id"],
+            title=raw_job["title"],
+            company=raw_job["company_name"],
+            location=raw_job["location"]["name"],
+            url=raw_job["absolute_url"],
+            first_published=raw_job["first_published"],
+            updated_at=raw_job["updated_at"],
+            description=clean_description(raw_job["content"]),
+        )
 
-# response = httpx.get(url)
-# response.raise_for_status()
+# All currently published jobs
+def fetch_jobs(board: str) -> list[Job]:
+    url = f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs"
 
-# job = response.json()
+    response = httpx.get(
+        url,
+        params={"content": "true"},
+    )
+    response.raise_for_status()
 
-# print(job["title"])
-# print(job["location"]["name"])
+    raw_jobs = response.json()["jobs"]
 
-url = "https://boards-api.greenhouse.io/v1/boards/doordashusa/jobs"
-params = {"content": "true"}
+    return [
+        Job(
+            job_id=raw["id"],
+            title=raw["title"],
+            company=raw["company_name"],
+            location=raw["location"]["name"],
+            url=raw["absolute_url"],
+            first_published=raw["first_published"],
+            updated_at=raw["updated_at"],
+            description=clean_description(raw["content"]),
+        )
+        for raw in raw_jobs
+    ]
 
-response = httpx.get(url, params=params)
-response.raise_for_status()
+# Get all DoorDash jobs
+jobs = fetch_jobs("doordashusa")
 
-data = response.json()
+print(f"Found {len(jobs)} jobs")
+first_job = jobs[0]
+print(first_job.job_id)
 
-print(f"Found {len(data['jobs'])} jobs")
+# Get specific DoorDash job
+job = fetch_job("doordashusa", 7263610)
 
-# print(json.dumps(data["jobs"], indent=4))
-
-for job in data["jobs"][:1]:
-    print(job.keys())
-    print(job.values())
-
+print(job.title)
+print(job.location)
