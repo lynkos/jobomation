@@ -17,7 +17,7 @@ class Job:
     active: bool = True
 
 @dataclass
-class CompanyConfig:
+class Company:
     name: str
     source_type: str
     board_id: str
