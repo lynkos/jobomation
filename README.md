@@ -43,18 +43,24 @@ See [Design Doc](DESIGN.md) for more details.
 │   └── settings.json
 ├── assets/
 │   ├── pipeline.drawio
-│   └── pipeline.svg
-├── config/
-│   └── profile.json
+│   ├── pipeline.svg
+│   ├── schema.drawio
+│   └── schema.svg
 ├── data/
 │   └── jobomation.db
 ├── src/
 │   └── jobomation/
+│       ├── collectors/
+│       │   ├── __init__.py
+│       │   └── greenhouse.py
+│       ├── db/
+│       │   ├── __init__.py
+│       │   ├── connection.py
+│       │   ├── repository.py
+│       │   └── schema.py
 │       ├── __init__.py
-│       ├── models.py
-│       └── collectors/
-│           ├── __init__.py
-│           └── greenhouse.py
+│       ├── main.py
+│       └── models.py
 ├── .gitignore
 ├── DESIGN.md
 ├── environment.yml
