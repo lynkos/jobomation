@@ -2,8 +2,17 @@ import dash_ag_grid as dag
 from dash import Dash, html
 from jobomation.db.repository import get_jobs
 
+HEIGHT = 650
+WIDTH = "100%"
+THEME = "themeBalham"
+PAGINATION = 20
+HEADER_SIZE = 24
+FONT_SIZE = 16
+FONT_FAMILY = "Arial"
+TITLE = "Jobs Dashboard"
+
 def create_app() -> Dash:
-    app = Dash(__name__)
+    app = Dash(__name__, title=TITLE)
 
     jobs = get_jobs()
 
@@ -32,8 +41,10 @@ def create_app() -> Dash:
 
     app.layout = html.Div(
         [
-            html.H1("Jobomation"),
-            html.P(f"{len(jobs)} jobs in database"),
+            html.H1(children = TITLE,
+                    style = { "textAlign": "center", "fontSize": HEADER_SIZE, "fontFamily": FONT_FAMILY }),
+            html.P(children = f"{len(jobs)} jobs in database",
+                    style = { "textAlign": "center", "fontSize": FONT_SIZE, "fontFamily": FONT_FAMILY }),
             dag.AgGrid(
                 id="jobs-grid",
                 rowData=rows,
@@ -44,9 +55,10 @@ def create_app() -> Dash:
                 },
                 dashGridOptions={
                     "pagination": True,
-                    "paginationPageSize": 20,
+                    "paginationPageSize": PAGINATION,
+                    "theme": THEME,
                 },
-                style={"height": 650, "width": "100%"}
+                style={"height": HEIGHT, "width": WIDTH}
             ),
         ]
     )
