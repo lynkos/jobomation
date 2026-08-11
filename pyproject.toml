@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jobomation"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Local-first job discovery, scraping, and application management tool"
 readme = "README.md"
 license = "MIT"
@@ -36,3 +36,6 @@ Repository = "https://github.com/lynkos/jobomation"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jobomation"]
+
+[tool.hatch.version]
+path = "src/jobomation/__init__.py"
