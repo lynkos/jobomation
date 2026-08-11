@@ -46,6 +46,7 @@ def create_app() -> Dash:
                     "pagination": True,
                     "paginationPageSize": 20,
                 },
+                style={"height": 650, "width": "100%"}
             ),
         ]
     )
