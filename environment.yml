@@ -9,7 +9,7 @@ dependencies:
       - sqlalchemy
       - pydantic
       - pydantic-settings
-      - httpx
+      - httpx==0.28.1
       - beautifulsoup4
       - lxml
       - python-dotenv
