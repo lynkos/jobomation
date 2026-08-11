@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 @dataclass
 class Job:
-    job_id: int
+    source: str
+    source_job_id: str
     title: str
     company: str
     location: str
