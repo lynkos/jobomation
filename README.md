@@ -8,27 +8,33 @@ Jobomation is a local-first tool for discovering, evaluating, and managing job o
 - [x] Conda
 
 ## Installation
-1. Clone repository
+1. Clone repository, then change directory to `jobomation`
    ```sh
-   git clone https://github.com/lynkos/jobomation.git
-   cd jobomation
+   git clone https://github.com/lynkos/jobomation.git && cd jobomation
    ```
 
-2. Create and activate Conda environment (`job_env`)
+2. Create Conda virtual environment (`job_env`)
    ```sh
    conda env create -f environment.yml
+   ```
+
+3. Activate Conda virtual environment (`job_env`)
+   ```sh
    conda activate job_env
    ```
 
 ## Usage
-Fetch and display job postings from Greenhouse
+Fetch job postings from Greenhouse and add to [SQLite Database](data/jobomation.db)
    ```sh
-   python -m jobomation.collectors.greenhouse
+   python -m jobomation.main
    ```
 
 ## Miscellaneous
 ### Design Doc
 See [Design Doc](DESIGN.md) for more details.
+
+### Database Schema
+<div align="center"><img alt="SQLite database schema" src="assets/schema.svg"></div>
 
 ### Directory Tree
 ```text
