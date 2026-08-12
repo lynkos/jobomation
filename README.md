@@ -23,6 +23,11 @@ Jobomation is a local-first tool for discovering, evaluating, and managing job o
    conda activate job_env
    ```
 
+4. Install tests
+   ```sh
+   python -m pip install -e ".[dev]"
+   ```
+
 ## Usage
 Fetch job postings from [companies](config/companies.yml) and add to [SQLite database](data/jobomation.db)
    ```sh
@@ -32,6 +37,17 @@ Fetch job postings from [companies](config/companies.yml) and add to [SQLite dat
 Run dashboard
    ```sh
    python -m jobomation.dashboard.app
+   ```
+
+## Testing
+For everything:
+   ```sh
+   pytest -v
+   ```
+
+For one subsystem:
+   ```sh
+   pytest tests/test_models.py -v
    ```
 
 ## Miscellaneous
@@ -86,6 +102,15 @@ See [Design Doc](DESIGN.md) for more details.
 │       ├── config.py
 │       ├── main.py
 │       └── models.py
+├── tests/
+│   ├── conftest.py
+│   ├── test_collectors.py
+│   ├── test_config.py
+│   ├── test_dashboard.py
+│   ├── test_database.py
+│   ├── test_filtering.py
+│   ├── test_main.py
+│   └── test_models.py
 ├── .gitignore
 ├── DESIGN.md
 ├── environment.yml
