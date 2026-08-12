@@ -195,6 +195,11 @@ def create_app() -> Dash:
                     job["filter_reason"] or "None",
                 ]),
 
+                html.P([
+                    html.Strong("Job ID: "),
+                    job["source_job_id"],
+                ]),
+
                 html.P(
                     html.A(
                         "Open job posting",
