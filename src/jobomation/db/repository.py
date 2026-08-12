@@ -99,10 +99,7 @@ def get_job(*, source: str, source_job_id: str, filtered: bool | None = None) ->
         params.append(str(filtered))
 
     with connect() as connection:
-        row = connection.execute(
-            query,
-            params,
-        ).fetchone()
+        row = connection.execute(query, params,).fetchone()
 
     return _row_to_job(row) if row is not None else None
 
@@ -130,3 +127,15 @@ def count_jobs() -> int:
         return connection.execute(
             "SELECT COUNT(*) FROM jobs"
         ).fetchone()[0]
+
+def set_job_active(*, source: str, source_job_id: str, active: bool) -> None:
+    with connect() as connection:
+        connection.execute(
+            """
+            UPDATE jobs
+            SET active = ?
+            WHERE source = ?
+            AND source_job_id = ?
+            """,
+            (int(active), source, source_job_id),
+        )

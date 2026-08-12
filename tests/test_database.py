@@ -243,3 +243,43 @@ def test_unique_constraint_is_source_scoped(temp_database):
     repository.save_job(ashby)
 
     assert repository.count_jobs() == 2
+
+def test_set_job_active(temp_database):
+    job = Job(
+        source="ashby",
+        source_job_id="123",
+        title="Two",
+        company="Company B",
+        location="Seattle",
+        url="https://example.com/b",
+        first_published="2026-01-01",
+        updated_at=None,
+        description="B",
+    )
+    repository.save_job(job)
+
+    repository.set_job_active(
+        source=job.source,
+        source_job_id=job.source_job_id,
+        active=False,
+    )
+
+    stored_job = repository.get_job(
+        source=job.source,
+        source_job_id=job.source_job_id,
+    )
+
+    if stored_job is not None: assert stored_job.active is False
+
+    repository.set_job_active(
+        source=job.source,
+        source_job_id=job.source_job_id,
+        active=True,
+    )
+
+    stored_job = repository.get_job(
+        source=job.source,
+        source_job_id=job.source_job_id,
+    )
+
+    if stored_job is not None: assert stored_job.active is True

@@ -1,6 +1,6 @@
 import dash_ag_grid as dag
 from dash import Dash, Input, Output, dcc, html
-from jobomation.db.repository import get_jobs
+from jobomation.db.repository import get_jobs, set_job_active
 
 HEIGHT = 500
 WIDTH = "100%"
@@ -19,7 +19,12 @@ BASE_COLUMN_DEFS = [
     {"field": "source", "filter": True},
     {"field": "first_published", "headerName": "First Published", "filter": True},
     {"field": "url", "headerName": "URL"},
-    {"field": "active", "filter": True},
+    {
+        "field": "active",
+        "filter": True,
+        "editable": True,
+        "cellDataType": "boolean",
+    },
 ]
 
 FILTER_COLUMN_DEFS = [
@@ -42,10 +47,24 @@ def job_to_row(job) -> dict:
         "description": job.description,
     }
 
+def update_job_active(events):
+    if not events: return
+
+    for event in events:
+        if event["colId"] != "active": continue
+
+        row = event["data"]
+
+        set_job_active(
+            source=row["source"],
+            source_job_id=row["source_job_id"],
+            active=row["active"],
+        )
+
 def create_app() -> Dash:
     app = Dash(__name__, title=TITLE)
 
-    jobs = get_jobs()
+    jobs = get_jobs(filtered=False)
     rows = [job_to_row(job) for job in jobs]
 
     app.layout = html.Div(
@@ -125,19 +144,18 @@ def create_app() -> Dash:
     )
     def update_rows(show_filtered):
         if "show" in show_filtered:
-            visible_jobs = jobs
+            jobs = get_jobs()
             visible_columns = BASE_COLUMN_DEFS + FILTER_COLUMN_DEFS
-            
         else:
-            visible_jobs = [job for job in jobs if not job.filtered]
+            jobs = get_jobs(filtered=False)
             visible_columns = BASE_COLUMN_DEFS
 
         return (
-            [job_to_row(job) for job in visible_jobs],
+            [job_to_row(job) for job in jobs],
             visible_columns,
-            f"{len(visible_jobs)} jobs shown ({len(jobs)} in database)",
+            f"{len(jobs)} jobs shown",
         )
-    
+        
     @app.callback(
         Output("job-details", "children"),
         Input("jobs-grid", "selectedRows"),
@@ -197,6 +215,11 @@ def create_app() -> Dash:
             ]
         )
 
+    app.callback(
+        Input("jobs-grid", "cellValueChanged"),
+        prevent_initial_call=True,
+    )(update_job_active)
+    
     return app
 
 app = create_app()

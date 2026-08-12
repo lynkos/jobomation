@@ -49,3 +49,87 @@ def test_dashboard_grid_contains_job(monkeypatch):
     assert grid.rowData[0]["title"] == "Software Engineer"
     assert grid.rowData[0]["company"] == "Example"
     assert grid.rowData[0]["source"] == "greenhouse"
+
+def test_dashboard_set_job_active(monkeypatch):
+    mocked_set_job_active = Mock()
+
+    monkeypatch.setattr(
+        dashboard,
+        "set_job_active",
+        mocked_set_job_active,
+    )
+
+    events = [
+        {
+            "colId": "active",
+            "data": {
+                "source": "indeed",
+                "source_job_id": "abc123",
+                "active": False,
+            },
+        }
+    ]
+
+    dashboard.update_job_active(events)
+
+    mocked_set_job_active.assert_called_once_with(
+        source="indeed",
+        source_job_id="abc123",
+        active=False,
+    )
+
+def test_dashboard_set_job_active_ignores_other_columns(monkeypatch):
+    mocked_set_job_active = Mock()
+
+    monkeypatch.setattr(
+        dashboard,
+        "set_job_active",
+        mocked_set_job_active,
+    )
+
+    events = [
+        {
+            "colId": "title",
+            "data": {
+                "source": "indeed",
+                "source_job_id": "abc123",
+                "active": False,
+            },
+        }
+    ]
+
+    dashboard.update_job_active(events)
+
+    mocked_set_job_active.assert_not_called()
+
+def test_dashboard_set_job_active_handles_multiple_changes(monkeypatch):
+    mocked_set_job_active = Mock()
+
+    monkeypatch.setattr(
+        dashboard,
+        "set_job_active",
+        mocked_set_job_active,
+    )
+
+    events = [
+        {
+            "colId": "active",
+            "data": {
+                "source": "indeed",
+                "source_job_id": "abc123",
+                "active": False,
+            },
+        },
+        {
+            "colId": "active",
+            "data": {
+                "source": "greenhouse",
+                "source_job_id": "456",
+                "active": True,
+            },
+        },
+    ]
+
+    dashboard.update_job_active(events)
+
+    assert mocked_set_job_active.call_count == 2
