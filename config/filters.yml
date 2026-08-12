@@ -1,0 +1,24 @@
+title:
+  exclude:
+    senior:
+      - '\bsenior\b'
+      - '\bsr\.?(?=\s|$|[,/-])'
+
+    staff:
+      - '\bstaff\b'
+
+    principal:
+      - '\bprincipal\b'
+
+    manager:
+      - '\bmanager\b'
+
+    director:
+      - '\bdirector\b'
+
+    lead:
+      - '\blead\b'
+
+    vice_president:
+      - '\bvice president\b'
+      - '\bvp\b'

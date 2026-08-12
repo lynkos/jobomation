@@ -52,7 +52,8 @@ See [Design Doc](DESIGN.md) for more details.
 │   ├── schema.drawio
 │   └── schema.svg
 ├── config/
-│   └── companies.yml
+│   ├── companies.yml
+│   └── filters.yml
 ├── data/
 │   └── jobomation.db
 ├── src/

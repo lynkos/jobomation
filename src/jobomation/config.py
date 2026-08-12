@@ -2,10 +2,11 @@ from jobomation.models import Company
 from pathlib import Path
 from yaml import safe_load
 
-CONFIG_PATH = Path("config/companies.yml")
+COMPANIES_CONFIG_PATH = Path("config/companies.yml")
+FILTERS_CONFIG_PATH = Path("config/filters.yml")
 
 def load_companies() -> list[Company]:
-    with CONFIG_PATH.open("r", encoding="utf-8") as file:
+    with COMPANIES_CONFIG_PATH.open("r", encoding="utf-8") as file:
         config = safe_load(file)
 
     return [
@@ -16,3 +17,7 @@ def load_companies() -> list[Company]:
         )
         for item in config["companies"]
     ]
+
+def load_filters() -> dict:
+    with FILTERS_CONFIG_PATH.open("r", encoding="utf-8") as file:
+        return safe_load(file) or {}

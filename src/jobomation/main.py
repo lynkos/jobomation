@@ -1,13 +1,15 @@
 from jobomation.collectors import COLLECTORS
-from jobomation.config import load_companies
+from jobomation.config import load_companies, load_filters
 from jobomation.filtering.rules import apply_filters_to_jobs
 from jobomation.db.repository import save_job, save_jobs, get_job, get_jobs, count_jobs
 from jobomation.db.schema import initialize_database
 
 def main() -> None:
     initialize_database()
-
-    for company in load_companies():
+    companies = load_companies()
+    filters = load_filters()
+    
+    for company in companies:
         collector = COLLECTORS.get(company.source_type)
 
         if collector is None:
@@ -15,7 +17,7 @@ def main() -> None:
             continue
 
         jobs = collector(company.board_id)
-        jobs = apply_filters_to_jobs(jobs)
+        jobs = apply_filters_to_jobs(jobs, filters)
         save_jobs(jobs)
         print(f"Saved {len(jobs)} jobs to database")
 

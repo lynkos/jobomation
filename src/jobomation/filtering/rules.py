@@ -1,33 +1,41 @@
-import re
+from re import search, IGNORECASE
 from jobomation.models import Job
 
-EXCLUDED_TITLE_PATTERNS = {
-    "senior": r"\bsenior\b",
-    "sr": r"\bsr\.?(?=\s|$|[,/-])",
-    "staff": r"\bstaff\b",
-    "principal": r"\bprincipal\b",
-    "manager": r"\bmanager\b",
-    "director": r"\bdirector\b",
-}
 
-def apply_title_filter(job: Job) -> Job:
+def apply_title_filter(
+    job: Job,
+    title_filters: dict[str, list[str]],
+) -> Job:
     title = job.title.casefold()
 
-    for reason, pattern in EXCLUDED_TITLE_PATTERNS.items():
-        if re.search(pattern, title):
-            job.filtered = True
-            job.filter_reason = f"title:{reason}"
-            return job
+    for reason, patterns in title_filters.items():
+        for pattern in patterns:
+            if search(pattern, title, flags=IGNORECASE):
+                job.filtered = True
+                job.filter_reason = f"title:{reason}"
+                return job
 
     return job
 
-def apply_filters(job: Job) -> Job:
+def apply_filters(job: Job, filters: dict) -> Job:
     job.filtered = False
     job.filter_reason = None
 
-    apply_title_filter(job)
+    title_filters = (
+        filters
+        .get("title", {})
+        .get("exclude", {})
+    )
+
+    apply_title_filter(job, title_filters)
 
     return job
 
-def apply_filters_to_jobs(jobs: list[Job]) -> list[Job]:
-    return [apply_filters(job) for job in jobs]
+def apply_filters_to_jobs(
+    jobs: list[Job],
+    filters: dict,
+) -> list[Job]:
+    return [
+        apply_filters(job, filters)
+        for job in jobs
+    ]

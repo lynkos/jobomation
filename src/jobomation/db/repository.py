@@ -138,57 +138,37 @@ def _row_to_job(row: sqlite3.Row) -> Job:
         filter_reason=row["filter_reason"]
     )
 
-def get_job(source: str, source_job_id: str) -> Job | None:
+def get_job(*, source: str, source_job_id: str, filtered: bool | None = None) -> Job | None:
     with connect() as connection:
         row = connection.execute(
             """
-            SELECT
-                source,
-                source_job_id,
-                title,
-                company,
-                location,
-                url,
-                first_published,
-                updated_at,
-                description,
-                first_seen_at,
-                last_seen_at,
-                active,
-                filtered,
-                filter_reason
+            SELECT *
             FROM jobs
             WHERE source = ?
             AND source_job_id = ?
+            AND filtered = ?
             """,
-            (source, source_job_id),
+            (source, source_job_id, filtered),
         ).fetchone()
 
     return _row_to_job(row) if row is not None else None
 
-def get_jobs() -> list[Job]:
+def get_jobs(*, filtered: bool | None = None) -> list[Job]:
+    query = """
+        SELECT *
+        FROM jobs
+    """
+
+    params = []
+
+    if filtered is not None:
+        query += " WHERE filtered = ?"
+        params.append(filtered)
+
+    query += " ORDER BY first_seen_at DESC"
+
     with connect() as connection:
-        rows = connection.execute(
-            """
-            SELECT
-                source,
-                source_job_id,
-                title,
-                company,
-                location,
-                url,
-                first_published,
-                updated_at,
-                description,
-                first_seen_at,
-                last_seen_at,
-                active,
-                filtered,
-                filter_reason
-            FROM jobs
-            ORDER BY first_seen_at DESC
-            """
-        ).fetchall()
+        rows = connection.execute(query, params).fetchall()
 
     return [_row_to_job(row) for row in rows]
 

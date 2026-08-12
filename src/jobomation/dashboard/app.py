@@ -14,7 +14,7 @@ TITLE = "Jobs Dashboard"
 def create_app() -> Dash:
     app = Dash(__name__, title=TITLE)
 
-    jobs = get_jobs()
+    jobs = get_jobs(filtered=False)
 
     rows = [
         {
