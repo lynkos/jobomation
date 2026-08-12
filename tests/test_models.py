@@ -1,4 +1,4 @@
-from jobomation.models import Company, Job
+from jobomation.models import Target, Job
 
 def test_job_defaults():
     job = Job(
@@ -19,13 +19,25 @@ def test_job_defaults():
     assert job.first_seen_at is None
     assert job.last_seen_at is None
 
-def test_company():
-    company = Company(
+def test_collection_target():
+    target = Target(
         name="DoorDash",
         source_type="greenhouse",
-        board_id="doordashusa",
+        args={
+            "board": "doordashusa",
+        },
     )
 
-    assert company.name == "DoorDash"
-    assert company.source_type == "greenhouse"
-    assert company.board_id == "doordashusa"
+    assert target.name == "DoorDash"
+    assert target.source_type == "greenhouse"
+    assert target.args == {
+        "board": "doordashusa",
+    }
+
+def test_collection_target_defaults_to_empty_args():
+    target = Target(
+        name="Example",
+        source_type="test",
+    )
+
+    assert target.args == {}

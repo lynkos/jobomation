@@ -29,7 +29,7 @@ Jobomation is a local-first tool for discovering, evaluating, and managing job o
    ```
 
 ## Usage
-Fetch job postings from [companies](config/companies.yml) and add to [SQLite database](data/jobomation.db)
+Fetch job postings from [targets](config/targets.yml) and add to [SQLite database](data/jobomation.db)
    ```sh
    python -m jobomation.main
    ```
@@ -54,7 +54,10 @@ For one subsystem:
 ### TODOs
 - [ ] Dashboard filter visibility
 - [ ] Board synchronization / inactive detection
-- [ ] Third collector (Lever)
+- [ ] More collectors:
+  - [x] Indeed
+  - [ ] Lever
+  - [ ] LinkedIn
 - [ ] Location + compensation filters
 - [ ] Candidate profile
 - [ ] LLM-based semantic scoring
@@ -77,8 +80,8 @@ See [Design Doc](DESIGN.md) for more details.
 │   ├── schema.drawio
 │   └── schema.svg
 ├── config/
-│   ├── companies.yml
-│   └── filters.yml
+│   ├── filters.yml
+│   └── targets.yml
 ├── data/
 │   └── jobomation.db
 ├── src/
@@ -86,7 +89,9 @@ See [Design Doc](DESIGN.md) for more details.
 │       ├── collectors/
 │       │   ├── __init__.py
 │       │   ├── ashby.py
-│       │   └── greenhouse.py
+│       │   ├── greenhouse.py
+│       │   ├── indeed.py
+│       │   └── utils.py
 │       ├── dashboard/
 │       │   ├── __init__.py
 │       │   └── app.py

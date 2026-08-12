@@ -1,4 +1,4 @@
-from jobomation.models import Company, Job
+from jobomation.models import Target, Job
 from jobomation import main
 
 def make_job(title: str) -> Job:
@@ -18,13 +18,15 @@ def test_main_collects_filters_and_saves(monkeypatch):
     initialized = []
     saved = []
 
-    company = Company(
+    target = Target(
         name="Example",
         source_type="test",
-        board_id="example",
+        args={
+            "board": "example",
+        },
     )
 
-    def collector(board):
+    def collector(*, board):
         assert board == "example"
 
         return [
@@ -40,8 +42,8 @@ def test_main_collects_filters_and_saves(monkeypatch):
 
     monkeypatch.setattr(
         main,
-        "load_companies",
-        lambda: [company],
+        "load_targets",
+        lambda: [target],
     )
 
     monkeypatch.setattr(
@@ -59,7 +61,9 @@ def test_main_collects_filters_and_saves(monkeypatch):
     monkeypatch.setattr(
         main,
         "COLLECTORS",
-        {"test": collector},
+        {
+            "test": collector,
+        },
     )
 
     monkeypatch.setattr(
@@ -78,11 +82,68 @@ def test_main_collects_filters_and_saves(monkeypatch):
     assert saved[1].filtered is True
     assert saved[1].filter_reason == "title:senior"
 
+def test_main_passes_target_args_to_collector(monkeypatch):
+    received = {}
+
+    target = Target(
+        name="Indeed Test",
+        source_type="test",
+        args={
+            "search_term": "software engineer",
+            "location": "Boston, MA",
+            "results_wanted": 100,
+        },
+    )
+
+    def collector(**kwargs):
+        received.update(kwargs)
+        return []
+
+    monkeypatch.setattr(
+        main,
+        "initialize_database",
+        lambda: None,
+    )
+
+    monkeypatch.setattr(
+        main,
+        "load_targets",
+        lambda: [target],
+    )
+
+    monkeypatch.setattr(
+        main,
+        "load_filters",
+        lambda: {},
+    )
+
+    monkeypatch.setattr(
+        main,
+        "COLLECTORS",
+        {
+            "test": collector,
+        },
+    )
+
+    monkeypatch.setattr(
+        main,
+        "save_jobs",
+        lambda jobs: None,
+    )
+
+    main.main()
+
+    assert received == {
+        "search_term": "software engineer",
+        "location": "Boston, MA",
+        "results_wanted": 100,
+    }
+
 def test_main_ignores_unknown_collector(monkeypatch, capsys):
-    company = Company(
+    target = Target(
         name="Unknown",
         source_type="does-not-exist",
-        board_id="unknown",
+        args={},
     )
 
     monkeypatch.setattr(
@@ -93,8 +154,8 @@ def test_main_ignores_unknown_collector(monkeypatch, capsys):
 
     monkeypatch.setattr(
         main,
-        "load_companies",
-        lambda: [company],
+        "load_targets",
+        lambda: [target],
     )
 
     monkeypatch.setattr(
@@ -113,4 +174,71 @@ def test_main_ignores_unknown_collector(monkeypatch, capsys):
 
     output = capsys.readouterr().out
 
-    assert "Unsupported source type: does-not-exist" in output
+    assert (
+        "Unsupported source type: does-not-exist"
+        in output
+    )
+
+def test_main_continues_after_collector_failure(monkeypatch, capsys):
+    bad_target = Target(
+        name="Broken Source",
+        source_type="broken",
+        args={},
+    )
+
+    good_target = Target(
+        name="Working Source",
+        source_type="working",
+        args={},
+    )
+
+    def broken_collector():
+        raise RuntimeError("boom")
+
+    def working_collector():
+        return [make_job("Software Engineer")]
+
+    saved = []
+
+    monkeypatch.setattr(
+        main,
+        "initialize_database",
+        lambda: None,
+    )
+
+    monkeypatch.setattr(
+        main,
+        "load_targets",
+        lambda: [
+            bad_target,
+            good_target,
+        ],
+    )
+
+    monkeypatch.setattr(
+        main,
+        "load_filters",
+        lambda: {},
+    )
+
+    monkeypatch.setattr(
+        main,
+        "COLLECTORS",
+        {
+            "broken": broken_collector,
+            "working": working_collector,
+        },
+    )
+
+    monkeypatch.setattr(
+        main,
+        "save_jobs",
+        lambda jobs: saved.extend(jobs),
+    )
+
+    main.main()
+
+    output = capsys.readouterr().out
+
+    assert "Failed to collect Broken Source" in output
+    assert len(saved) == 1

@@ -1,15 +1,9 @@
 import httpx
-import html
-from bs4 import BeautifulSoup
 from jobomation.models import Job
+from jobomation.collectors.utils import clean_description
 
 JOB_COLLECTOR_NAME = "greenhouse"
 JOB_COLLECTOR_URL = "https://boards-api.greenhouse.io/v1/boards"
-
-def _clean_description(content: str) -> str:
-    decoded = html.unescape(content)
-    soup = BeautifulSoup(decoded, "html.parser")
-    return soup.get_text(separator="\n", strip=True)
 
 def _raw_to_job(raw: dict) -> Job:
     return Job(
@@ -21,7 +15,7 @@ def _raw_to_job(raw: dict) -> Job:
         url=raw["absolute_url"],
         first_published=raw["first_published"],
         updated_at=raw["updated_at"],
-        description=_clean_description(raw["content"])
+        description=clean_description(raw["content"])
     )
 
 # Fetch job by ID

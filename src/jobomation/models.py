@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 @dataclass
 class Job:
@@ -17,9 +18,9 @@ class Job:
     active: bool = True
     filtered: bool = False
     filter_reason: str | None = None
-    
+
 @dataclass
-class Company:
+class Target:
     name: str
     source_type: str
-    board_id: str
+    args: dict[str, Any] = field(default_factory=dict)
