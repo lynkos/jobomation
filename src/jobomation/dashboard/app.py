@@ -78,16 +78,6 @@ def create_app() -> Dash:
                 },
             ),
 
-            html.P(
-                f"{len(jobs)} jobs in database",
-                id="job-count",
-                style={
-                    "textAlign": "center",
-                    "fontSize": FONT_SIZE,
-                    "fontFamily": FONT_FAMILY,
-                },
-            ),
-
             dcc.Checklist(
                 id="show-filtered",
                 options=[
@@ -139,7 +129,6 @@ def create_app() -> Dash:
     @app.callback(
         Output("jobs-grid", "rowData"),
         Output("jobs-grid", "columnDefs"),
-        Output("job-count", "children"),
         Input("show-filtered", "value"),
     )
     def update_rows(show_filtered):
@@ -153,7 +142,6 @@ def create_app() -> Dash:
         return (
             [job_to_row(job) for job in jobs],
             visible_columns,
-            f"{len(jobs)} jobs shown",
         )
         
     @app.callback(
