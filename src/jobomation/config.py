@@ -12,7 +12,7 @@ def load_targets() -> list[Target]:
     return [
         Target(
             name=item["name"],
-            source_type=item["source_type"],
+            source=item["source"],
             args=item.get("args", {}),
         )
         for item in config["targets"]

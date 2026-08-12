@@ -7,17 +7,17 @@ def test_load_targets(tmp_path, monkeypatch):
         """
 targets:
   - name: DoorDash
-    source_type: greenhouse
+    source: greenhouse
     args:
       board: doordashusa
 
   - name: Ramp
-    source_type: ashby
+    source: ashby
     args:
       board: ramp
 
   - name: Indeed - Software Engineer
-    source_type: indeed
+    source: indeed
     args:
       search_term: software engineer
       location: United States
@@ -37,19 +37,19 @@ targets:
     assert len(targets) == 3
 
     assert targets[0].name == "DoorDash"
-    assert targets[0].source_type == "greenhouse"
+    assert targets[0].source == "greenhouse"
     assert targets[0].args == {
         "board": "doordashusa",
     }
 
     assert targets[1].name == "Ramp"
-    assert targets[1].source_type == "ashby"
+    assert targets[1].source == "ashby"
     assert targets[1].args == {
         "board": "ramp",
     }
 
     assert targets[2].name == "Indeed - Software Engineer"
-    assert targets[2].source_type == "indeed"
+    assert targets[2].source == "indeed"
     assert targets[2].args == {
         "search_term": "software engineer",
         "location": "United States",
@@ -63,7 +63,7 @@ def test_load_target_without_args(tmp_path, monkeypatch):
         """
 targets:
   - name: Example
-    source_type: test
+    source: test
 """,
         encoding="utf-8",
     )

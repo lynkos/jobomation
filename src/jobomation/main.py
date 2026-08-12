@@ -11,10 +11,10 @@ def main() -> None:
     filters = load_filters()
 
     for target in targets:
-        collector = COLLECTORS.get(target.source_type)
+        collector = COLLECTORS.get(target.source)
 
         if collector is None:
-            print(f"Unsupported source type: {target.source_type}")
+            print(f"Unsupported source: {target.source}")
             continue
 
         try: jobs = collector(**target.args)

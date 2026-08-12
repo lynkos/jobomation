@@ -22,14 +22,14 @@ def test_job_defaults():
 def test_collection_target():
     target = Target(
         name="DoorDash",
-        source_type="greenhouse",
+        source="greenhouse",
         args={
             "board": "doordashusa",
         },
     )
 
     assert target.name == "DoorDash"
-    assert target.source_type == "greenhouse"
+    assert target.source == "greenhouse"
     assert target.args == {
         "board": "doordashusa",
     }
@@ -37,7 +37,7 @@ def test_collection_target():
 def test_collection_target_defaults_to_empty_args():
     target = Target(
         name="Example",
-        source_type="test",
+        source="test",
     )
 
     assert target.args == {}

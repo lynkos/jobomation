@@ -20,7 +20,7 @@ def test_main_collects_filters_and_saves(monkeypatch):
 
     target = Target(
         name="Example",
-        source_type="test",
+        source="test",
         args={
             "board": "example",
         },
@@ -87,7 +87,7 @@ def test_main_passes_target_args_to_collector(monkeypatch):
 
     target = Target(
         name="Indeed Test",
-        source_type="test",
+        source="test",
         args={
             "search_term": "software engineer",
             "location": "Boston, MA",
@@ -142,7 +142,7 @@ def test_main_passes_target_args_to_collector(monkeypatch):
 def test_main_ignores_unknown_collector(monkeypatch, capsys):
     target = Target(
         name="Unknown",
-        source_type="does-not-exist",
+        source="does-not-exist",
         args={},
     )
 
@@ -182,13 +182,13 @@ def test_main_ignores_unknown_collector(monkeypatch, capsys):
 def test_main_continues_after_collector_failure(monkeypatch, capsys):
     bad_target = Target(
         name="Broken Source",
-        source_type="broken",
+        source="broken",
         args={},
     )
 
     good_target = Target(
         name="Working Source",
-        source_type="working",
+        source="working",
         args={},
     )
 

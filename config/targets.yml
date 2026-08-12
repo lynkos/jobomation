@@ -1,47 +1,47 @@
 targets:
   - name: DoorDash
-    source_type: greenhouse
+    source: greenhouse
     args:
       board: doordashusa
 
   - name: Twitch
-    source_type: greenhouse
+    source: greenhouse
     args:
       board: twitch
 
   - name: Ramp
-    source_type: ashby
+    source: ashby
     args:
       board: ramp
 
   - name: Indeed - Software Engineer
-    source_type: indeed
+    source: indeed
     args:
       search_term: software engineer
       location: United States
       results_wanted: 100
 
   - name: Indeed - SWE
-    source_type: indeed
+    source: indeed
     args:
       search_term: software engineer
       location: United States
       results_wanted: 100
 
   - name: Indeed - Infrastructure
-    source_type: indeed
+    source: indeed
     args:
       search_term: infrastructure engineer
       location: United States
       results_wanted: 100
 
   # - name: LinkedIn - Platform
-  #   source_type: linkedin
+  #   source: linkedin
   #   args:
   #     search_term: platform engineer
   #     location: United States
 
   # - name: Some Lever Company
-  #   source_type: lever
+  #   source: lever
   #   args:
   #     board: some-company

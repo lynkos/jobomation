@@ -22,5 +22,5 @@ class Job:
 @dataclass
 class Target:
     name: str
-    source_type: str
+    source: str
     args: dict[str, Any] = field(default_factory=dict)
