@@ -1,5 +1,6 @@
 from jobomation.collectors import COLLECTORS
 from jobomation.config import load_companies
+from jobomation.filtering.rules import apply_filters_to_jobs
 from jobomation.db.repository import save_job, save_jobs, get_job, get_jobs, count_jobs
 from jobomation.db.schema import initialize_database
 
@@ -14,9 +15,18 @@ def main() -> None:
             continue
 
         jobs = collector(company.board_id)
+        jobs = apply_filters_to_jobs(jobs)
         save_jobs(jobs)
         print(f"Saved {len(jobs)} jobs to database")
-    
+
+        filtered_count = sum(job.filtered for job in jobs)
+
+        print(
+            f"{company.name}: "
+            f"{len(jobs)} collected, "
+            f"{filtered_count} filtered, "
+            f"{len(jobs) - filtered_count} visible"
+        )
     # Get specific Twitch job
     # job = fetch_job(TWITCH, 8623401002)
     # save_job(job)

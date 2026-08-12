@@ -15,7 +15,9 @@ class Job:
     first_seen_at: datetime | None = None
     last_seen_at: datetime | None = None
     active: bool = True
-
+    filtered: bool = False
+    filter_reason: str | None = None
+    
 @dataclass
 class Company:
     name: str

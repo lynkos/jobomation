@@ -24,9 +24,11 @@ def save_job(job: Job) -> None:
                 description,
                 first_seen_at,
                 last_seen_at,
-                active
+                active,
+                filtered,
+                filter_reason
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(source, source_job_id)
             DO UPDATE SET
                 title = excluded.title,
@@ -37,7 +39,9 @@ def save_job(job: Job) -> None:
                 updated_at = excluded.updated_at,
                 description = excluded.description,
                 last_seen_at = excluded.last_seen_at,
-                active = TRUE
+                active = TRUE,
+                filtered = excluded.filtered,
+                filter_reason = excluded.filter_reason
             """,
             (
                 job.source,
@@ -51,7 +55,9 @@ def save_job(job: Job) -> None:
                 job.description,
                 now,
                 now,
-                TRUE
+                TRUE,
+                job.filtered,
+                job.filter_reason
             ),
         )
 
@@ -74,9 +80,11 @@ def save_jobs(jobs: list[Job]) -> None:
                 description,
                 first_seen_at,
                 last_seen_at,
-                active
+                active,
+                filtered,
+                filter_reason
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(source, source_job_id)
             DO UPDATE SET
                 title = excluded.title,
@@ -87,7 +95,9 @@ def save_jobs(jobs: list[Job]) -> None:
                 updated_at = excluded.updated_at,
                 description = excluded.description,
                 last_seen_at = excluded.last_seen_at,
-                active = TRUE
+                active = TRUE,
+                filtered = excluded.filtered,
+                filter_reason = excluded.filter_reason
             """,
             [
                 (
@@ -102,7 +112,9 @@ def save_jobs(jobs: list[Job]) -> None:
                     job.description,
                     now,
                     now,
-                    TRUE
+                    TRUE,
+                    job.filtered,
+                    job.filter_reason
                 )
                 for job in jobs
             ],
@@ -122,6 +134,8 @@ def _row_to_job(row: sqlite3.Row) -> Job:
         first_seen_at=row["first_seen_at"],
         last_seen_at=row["last_seen_at"],
         active=bool(row["active"]),
+        filtered=bool(row["filtered"]),
+        filter_reason=row["filter_reason"]
     )
 
 def get_job(source: str, source_job_id: str) -> Job | None:
@@ -140,7 +154,9 @@ def get_job(source: str, source_job_id: str) -> Job | None:
                 description,
                 first_seen_at,
                 last_seen_at,
-                active
+                active,
+                filtered,
+                filter_reason
             FROM jobs
             WHERE source = ?
             AND source_job_id = ?
@@ -166,7 +182,9 @@ def get_jobs() -> list[Job]:
                 description,
                 first_seen_at,
                 last_seen_at,
-                active
+                active,
+                filtered,
+                filter_reason
             FROM jobs
             ORDER BY first_seen_at DESC
             """

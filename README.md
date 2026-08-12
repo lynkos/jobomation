@@ -69,6 +69,9 @@ See [Design Doc](DESIGN.md) for more details.
 │       │   ├── connection.py
 │       │   ├── repository.py
 │       │   └── schema.py
+│       ├── filtering/
+│       │   ├── __init__.py
+│       │   └── rules.py
 │       ├── __init__.py
 │       ├── config.py
 │       ├── main.py
