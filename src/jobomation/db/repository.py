@@ -131,24 +131,31 @@ def _row_to_job(row: sqlite3.Row) -> Job:
         first_published=row["first_published"],
         updated_at=row["updated_at"],
         description=row["description"],
-        first_seen_at=row["first_seen_at"],
-        last_seen_at=row["last_seen_at"],
+        first_seen_at=(row["first_seen_at"] if row["first_seen_at"] else None),
+        last_seen_at=(row["last_seen_at"] if row["last_seen_at"] else None),
         active=bool(row["active"]),
         filtered=bool(row["filtered"]),
         filter_reason=row["filter_reason"]
     )
 
 def get_job(*, source: str, source_job_id: str, filtered: bool | None = None) -> Job | None:
+    query = """
+        SELECT *
+        FROM jobs
+        WHERE source = ?
+        AND source_job_id = ?
+    """
+
+    params = [source, source_job_id]
+
+    if filtered is not None:
+        query += " AND filtered = ?"
+        params.append(str(filtered))
+
     with connect() as connection:
         row = connection.execute(
-            """
-            SELECT *
-            FROM jobs
-            WHERE source = ?
-            AND source_job_id = ?
-            AND filtered = ?
-            """,
-            (source, source_job_id, filtered),
+            query,
+            params,
         ).fetchone()
 
     return _row_to_job(row) if row is not None else None
