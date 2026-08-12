@@ -35,6 +35,15 @@ Run dashboard
    ```
 
 ## Miscellaneous
+### TODOs
+- [ ] Dashboard filter visibility
+- [ ] Board synchronization / inactive detection
+- [ ] Third collector (Lever)
+- [ ] Location + compensation filters
+- [ ] Candidate profile
+- [ ] LLM-based semantic scoring
+- [ ] Ranking / inbox
+
 ### Design Doc
 See [Design Doc](DESIGN.md) for more details.
 
