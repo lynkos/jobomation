@@ -1,9 +1,9 @@
 <div align="center"><h1>Jobomation</h1></div>
 
-Jobomation is a local-first tool for discovering, evaluating, and managing job opportunities.
-
 > [!IMPORTANT]
 > Jobomation is currently in early development.
+
+Jobomation is a local-first tool for discovering, evaluating, and managing job opportunities.
 
 ## Requirements
 - [x] <a target="_blank" href="https://docs.continuum.io/free/anaconda/install">Anaconda</a> **OR** <a target="_blank" href="https://docs.conda.io/projects/miniconda/en/latest">Miniconda</a>
@@ -78,7 +78,7 @@ Jobomation is a local-first tool for discovering, evaluating, and managing job o
    git clone https://github.com/lynkos/jobomation.git && cd jobomation
    ```
 
-5. Create Conda virtual environment (`job_env`) from [`environment.yml`](environment.yml)
+5. Create Conda virtual environment (`job_env`) from [`environment.yml`](../environment.yml)
    ```sh
    conda env create -f environment.yml
    ```
@@ -94,7 +94,7 @@ Jobomation is a local-first tool for discovering, evaluating, and managing job o
    ```
 
 ## Usage
-Fetch job postings from [targets](config/targets.yml) and add to [SQLite database](data/jobomation.db)
+Fetch job postings from [targets](../config/targets.yml) and add to SQLite database
    ```sh
    python -m jobomation.main
    ```
@@ -110,7 +110,7 @@ For everything:
    pytest -v
    ```
 
-For one subsystem, such as [`models.py`](src/jobomation/models.py):
+For one subsystem, such as [`models.py`](../src/jobomation/models.py):
    ```sh
    pytest tests/test_models.py -v
    ```
@@ -120,7 +120,7 @@ For one subsystem, such as [`models.py`](src/jobomation/models.py):
 See [Design Doc](DESIGN.md) for more details.
 
 ### Database Schema
-<div align="center"><img alt="SQLite database schema" src="assets/schema.svg"></div>
+<div align="center"><img alt="SQLite database schema" src="../assets/schema.svg"></div>
 
 ### Directory Tree
 <details open>
@@ -138,6 +138,9 @@ See [Design Doc](DESIGN.md) for more details.
 │   └── targets.yml
 ├── data/
 │   └── jobomation.db
+├── docs/
+│   ├── DESIGN.md
+│   └── README.md
 ├── src/
 │   └── jobomation/
 │       ├── collectors/
@@ -171,10 +174,8 @@ See [Design Doc](DESIGN.md) for more details.
 │   ├── test_main.py
 │   └── test_models.py
 ├── .gitignore
-├── DESIGN.md
 ├── environment.yml
 ├── LICENSE.md
-├── pyproject.toml
-└── README.md
+└── pyproject.toml
 </pre>
 </details>
