@@ -18,9 +18,18 @@ class Job:
     active: bool = True
     filtered: bool = False
     filter_reason: str | None = None
+    compensation: Compensation | None = None
 
 @dataclass
 class Target:
     name: str
     source: str
-    args: dict[str, Any] = field(default_factory=dict)
+    args: dict[str, Any] = field(default_factory = dict)
+
+@dataclass
+class Compensation:
+    min_amount: float | None = None
+    max_amount: float | None = None
+    currency: str | None = None
+    interval: str | None = None
+    description: str | None = None

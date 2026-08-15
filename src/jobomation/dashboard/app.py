@@ -18,6 +18,7 @@ BASE_COLUMN_DEFS = [
     {"field": "location", "filter": True},
     {"field": "source", "filter": True},
     {"field": "first_published", "headerName": "First Published", "filter": True},
+    {"field": "compensation", "headerName": "Compensation", "filter": True},
     {"field": "url", "headerName": "URL"},
     {
         "field": "active",
@@ -40,12 +41,37 @@ def job_to_row(job) -> dict:
         "company": job.company,
         "location": job.location,
         "first_published": job.first_published,
+        "compensation": format_compensation(job.compensation),
+        "compensation_description": (
+            job.compensation.description
+            if job.compensation
+            else None
+        ),
         "filtered": job.filtered,
         "filter_reason": job.filter_reason,
         "url": job.url,
         "active": job.active,
         "description": job.description,
     }
+
+def format_compensation(compensation) -> str | None:
+    if compensation is None: return None
+
+    minimum = compensation.min_amount
+    maximum = compensation.max_amount
+    currency = compensation.currency
+    interval = compensation.interval
+
+    if minimum is not None and maximum is not None: amount = f"{minimum:,.0f} – {maximum:,.0f}"
+    elif minimum is not None: amount = f"{minimum:,.0f}+"
+    elif maximum is not None: amount = f"Up to {maximum:,.0f}"
+    else: amount = None
+
+    if amount is None: return compensation.description
+    if currency: amount = f"{currency} {amount}"
+    if interval: amount = f"{amount} / {interval}"
+
+    return amount
 
 def update_job_active(events):
     if not events: return
@@ -82,7 +108,7 @@ def create_app() -> Dash:
                 id="show-filtered",
                 options=[
                     {
-                        "label": "Show filtered jobs",
+                        "label": "Include filtered jobs",
                         "value": "show",
                     }
                 ],
@@ -174,14 +200,24 @@ def create_app() -> Dash:
                 ]),
 
                 html.P([
+                    html.Strong("Compensation: "),
+                    job["compensation"] or "Not listed",
+                ]),
+
+                html.P([
+                    html.Strong("Compensation Details: "),
+                    job["compensation_description"],
+                ]) if job["compensation_description"] else None,
+
+                html.P([
                     html.Strong("Filtered: "),
                     str(job["filtered"]),
                 ]),
 
                 html.P([
                     html.Strong("Filter Reason: "),
-                    job["filter_reason"] or "None",
-                ]),
+                    job["filter_reason"],
+                ]) if job["filter_reason"] else None,
 
                 html.P([
                     html.Strong("Job ID: "),

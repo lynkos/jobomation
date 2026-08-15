@@ -1,7 +1,7 @@
 from jobomation.collectors import COLLECTORS
 from jobomation.config import load_targets, load_filters
 from jobomation.filtering.rules import apply_filters_to_jobs
-from jobomation.db.repository import save_job, save_jobs, get_job, get_jobs, count_jobs
+from jobomation.db.repository import save_jobs, save_job, get_job, get_jobs, count_jobs
 from jobomation.db.schema import initialize_database
 
 def main() -> None:
@@ -19,7 +19,7 @@ def main() -> None:
 
         try: jobs = collector(**target.args)
         except Exception as error:
-            print(f"Failed to collect {target.name}: {error}")
+            print(f"Failed to collect {target.name} from {target.source}: {error}")
             continue
 
         jobs = apply_filters_to_jobs(jobs, filters)

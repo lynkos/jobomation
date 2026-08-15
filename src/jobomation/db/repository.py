@@ -1,62 +1,99 @@
 import sqlite3
 from datetime import datetime, timezone
 from jobomation.db.connection import connect
-from jobomation.models import Job
+from jobomation.models import Compensation, Job
 
 TRUE = 1
 FALSE = 0
 SQL_QUERY = """
-            INSERT INTO jobs (
-                source,
-                source_job_id,
-                title,
-                company,
-                location,
-                url,
-                first_published,
-                updated_at,
-                description,
-                first_seen_at,
-                last_seen_at,
-                active,
-                filtered,
-                filter_reason
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(source, source_job_id)
-            DO UPDATE SET
-                title = excluded.title,
-                company = excluded.company,
-                location = excluded.location,
-                url = excluded.url,
-                first_published = excluded.first_published,
-                updated_at = excluded.updated_at,
-                description = excluded.description,
-                last_seen_at = excluded.last_seen_at,
-                active = TRUE,
-                filtered = excluded.filtered,
-                filter_reason = excluded.filter_reason
-            """
+    INSERT INTO jobs (
+        source,
+        source_job_id,
+        title,
+        company,
+        location,
+        url,
+        first_published,
+        updated_at,
+        description,
+        compensation_min_amount,
+        compensation_max_amount,
+        compensation_currency,
+        compensation_interval,
+        compensation_description,
+        first_seen_at,
+        last_seen_at,
+        active,
+        filtered,
+        filter_reason
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(source, source_job_id)
+    DO UPDATE SET
+        title = excluded.title,
+        company = excluded.company,
+        location = excluded.location,
+        url = excluded.url,
+        first_published = excluded.first_published,
+        updated_at = excluded.updated_at,
+        description = excluded.description,
+        compensation_min_amount = excluded.compensation_min_amount,
+        compensation_max_amount = excluded.compensation_max_amount,
+        compensation_currency = excluded.compensation_currency,
+        compensation_interval = excluded.compensation_interval,
+        compensation_description = excluded.compensation_description,
+        last_seen_at = excluded.last_seen_at,
+        active = TRUE,
+        filtered = excluded.filtered,
+        filter_reason = excluded.filter_reason
+"""
+
+def _row_to_compensation(row: sqlite3.Row) -> Compensation | None:
+    if (
+        row["compensation_min_amount"] is None
+        and row["compensation_max_amount"] is None
+        and row["compensation_currency"] is None
+        and row["compensation_interval"] is None
+        and row["compensation_description"] is None
+    ):
+        return None
+
+    return Compensation(
+        min_amount=row["compensation_min_amount"],
+        max_amount=row["compensation_max_amount"],
+        currency=row["compensation_currency"],
+        interval=row["compensation_interval"],
+        description=row["compensation_description"],
+    )
 
 def get_params(job: Job) -> tuple:
     now = datetime.now(timezone.utc).isoformat()
-    
+
+    compensation = job.compensation
+
     return (
-            job.source,
-            job.source_job_id,
-            job.title,
-            job.company,
-            job.location,
-            job.url,
-            job.first_published,
-            job.updated_at,
-            job.description,
-            now,
-            now,
-            TRUE,
-            job.filtered,
-            job.filter_reason
-        )
+        job.source,
+        job.source_job_id,
+        job.title,
+        job.company,
+        job.location,
+        job.url,
+        job.first_published,
+        job.updated_at,
+        job.description,
+
+        compensation.min_amount if compensation else None,
+        compensation.max_amount if compensation else None,
+        compensation.currency if compensation else None,
+        compensation.interval if compensation else None,
+        compensation.description if compensation else None,
+
+        now,
+        now,
+        TRUE,
+        job.filtered,
+        job.filter_reason,
+    )
 
 def save_job(job: Job) -> None:
     with connect() as connection:        
@@ -77,11 +114,20 @@ def _row_to_job(row: sqlite3.Row) -> Job:
         first_published=row["first_published"],
         updated_at=row["updated_at"],
         description=row["description"],
-        first_seen_at=(row["first_seen_at"] if row["first_seen_at"] else None),
-        last_seen_at=(row["last_seen_at"] if row["last_seen_at"] else None),
+        first_seen_at=(
+            datetime.fromisoformat(row["first_seen_at"])
+            if row["first_seen_at"]
+            else None
+        ),
+        last_seen_at=(
+            datetime.fromisoformat(row["last_seen_at"])
+            if row["last_seen_at"]
+            else None
+        ),
         active=bool(row["active"]),
         filtered=bool(row["filtered"]),
-        filter_reason=row["filter_reason"]
+        filter_reason=row["filter_reason"],
+        compensation=_row_to_compensation(row),
     )
 
 def get_job(*, source: str, source_job_id: str, filtered: bool | None = None) -> Job | None:

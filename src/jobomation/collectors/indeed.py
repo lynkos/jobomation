@@ -1,9 +1,9 @@
-import httpx
-from datetime import datetime, timezone
-from jobomation.models import Job
-from jobomation.collectors.utils import clean_description
+from httpx import post as post_request
 from os import getenv
 from dotenv import load_dotenv
+from datetime import datetime, timezone
+from jobomation.models import Compensation, Job
+from jobomation.collectors.utils import clean_description
 
 load_dotenv()
 
@@ -125,8 +125,7 @@ def _build_query(search_term: str | None = None, location: str | None = None, cu
             f'radius: {radius}, radiusUnit: MILES}}'
         )
 
-    if cursor:
-        cursor_query = f'cursor: "{cursor}"'
+    if cursor: cursor_query = f'cursor: "{cursor}"'
 
     return JOB_SEARCH_QUERY.format(
         what=what,
@@ -150,7 +149,7 @@ def _fetch_page(
         radius=radius
     )
 
-    response = httpx.post(
+    response = post_request(
         INDEED_API_URL,
         headers=_headers(),
         json={"query": query},
@@ -171,10 +170,27 @@ def _format_timestamp(timestamp_ms: int | None) -> str:
 
     return datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc).isoformat()
 
+def _raw_to_compensation(raw: dict) -> Compensation | None:
+    if not raw["baseSalary"] and not raw["estimated"]: return None
+    comp = (raw["baseSalary"] if raw["baseSalary"] else raw["estimated"]["baseSalary"])
+    if not comp: return None
+    
+    min_range = comp["range"].get("min")
+    max_range = comp["range"].get("max")
+    
+    return Compensation(
+        min_amount=min_range if min_range is not None else None,
+        max_amount=max_range if max_range is not None else None,
+        currency=raw["estimated"]["currencyCode"] if raw["estimated"] else raw["currencyCode"],
+        interval=comp["unitOfWork"] if comp["unitOfWork"] else None,
+        description=None
+    )
+
 def _raw_to_job(raw: dict) -> Job:
     location = raw.get("location") or {}
     employer = raw.get("employer") or {}
     description = raw.get("description") or {}
+    compensation = raw.get("compensation") or {}
 
     formatted_location = (
         location.get("formatted", {}).get("long")
@@ -191,14 +207,15 @@ def _raw_to_job(raw: dict) -> Job:
 
     return Job(
         source=JOB_COLLECTOR_NAME,
-        source_job_id=str(raw["key"]),
+        source_job_id=raw["key"],
         title=raw["title"],
         company=employer.get("name") or "",
         location=formatted_location,
         url=f"{INDEED_BASE_URL}/viewjob?jk={raw['key']}",
         first_published=_format_timestamp(raw.get("datePublished")),
         updated_at=None,
-        description=clean_description(description.get("html", ""))
+        description=clean_description(description.get("html", "")),
+        compensation=_raw_to_compensation(compensation) if compensation else None
     )
 
 def fetch_jobs(
@@ -224,7 +241,7 @@ def fetch_jobs(
 
         for result in results:
             raw = result["job"]
-            job_id = str(raw["key"])
+            job_id = raw["key"]
 
             if job_id in seen_ids: continue
 

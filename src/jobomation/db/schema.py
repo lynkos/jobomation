@@ -14,11 +14,24 @@ def initialize_database() -> None:
                 first_published TEXT,
                 updated_at TEXT,
                 description TEXT,
+
+                compensation_min_amount REAL,
+                compensation_max_amount REAL,
+                compensation_currency TEXT,
+                compensation_interval TEXT,
+                compensation_description TEXT,
+
                 first_seen_at TEXT NOT NULL,
                 last_seen_at TEXT NOT NULL,
-                active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
-                filtered INTEGER NOT NULL DEFAULT 0 CHECK (filtered IN (0, 1)),
+
+                active INTEGER NOT NULL DEFAULT 1
+                    CHECK (active IN (0, 1)),
+
+                filtered INTEGER NOT NULL DEFAULT 0
+                    CHECK (filtered IN (0, 1)),
+
                 filter_reason TEXT,
+
                 UNIQUE(source, source_job_id)
             )
         """)

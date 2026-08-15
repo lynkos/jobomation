@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from jobomation.db import repository
 from jobomation.db.connection import connect
-from jobomation.models import Job
+from jobomation.models import Compensation, Job
 
 def test_schema_created(temp_database):
     with connect(temp_database) as connection:
@@ -22,6 +22,11 @@ def test_schema_created(temp_database):
         "first_published",
         "updated_at",
         "description",
+        "compensation_min_amount",
+        "compensation_max_amount",
+        "compensation_currency",
+        "compensation_interval",
+        "compensation_description",
         "first_seen_at",
         "last_seen_at",
         "active",
@@ -283,3 +288,44 @@ def test_set_job_active(temp_database):
     )
 
     if stored_job is not None: assert stored_job.active is True
+
+def test_save_and_get_job_with_compensation(
+    temp_database,
+    sample_job,
+):
+    sample_job.compensation = Compensation(
+        min_amount=100000,
+        max_amount=120000,
+        currency="USD",
+        interval="year",
+        description="Base salary",
+    )
+
+    repository.save_job(sample_job)
+
+    result = repository.get_job(
+        source=sample_job.source,
+        source_job_id=sample_job.source_job_id,
+    )
+
+    assert result is not None
+    assert result.compensation is not None
+    assert result.compensation.min_amount == 100000
+    assert result.compensation.max_amount == 120000
+    assert result.compensation.currency == "USD"
+    assert result.compensation.interval == "year"
+    assert result.compensation.description == "Base salary"
+
+def test_save_and_get_job_without_compensation(
+    temp_database,
+    sample_job,
+):
+    repository.save_job(sample_job)
+
+    result = repository.get_job(
+        source=sample_job.source,
+        source_job_id=sample_job.source_job_id,
+    )
+
+    assert result is not None
+    assert result.compensation is None
