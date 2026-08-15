@@ -144,7 +144,7 @@ Automated form filling may be considered later, but final submission remains a s
 The system is organized as a pipeline with persistent state between stages:
 
 <div align="center">
-  <img src="assets/pipeline.svg" alt="Pipeline overview"/>
+  <img src="../assets/pipeline.svg" alt="Pipeline overview"/>
 </div>
 
 A job should move through the pipeline asynchronously. Collection should not require immediate LLM evaluation, and evaluation should not require the dashboard to be running.
