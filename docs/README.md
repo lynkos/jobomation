@@ -203,3 +203,9 @@ See [Design Doc](DESIGN.md) for more details.
 > * Reasoning: Legitimate MCP work earlier without inventing a graph abstraction before the underlying structured data exists.
 > * Don't label [`#19 (add collector contract and pipeline integration tests)`](https://github.com/lynkos/jobomation/issues/19), [`#17 (portability)`](https://github.com/lynkos/jobomation/issues/17), or [`#26 (ADRs)`](https://github.com/lynkos/jobomation/issues/26) as `next`.
 > * Testing should accompany implementation work rather than compete with the main feature queue.
+
+## References
+- [**Greenhouse**: Job Board API](https://developers.greenhouse.io/job-board.html)
+- [**Ashby**: Job Postings API](https://developers.ashbyhq.com/docs/public-job-posting-api)
+- [**JobSpy** Repository](https://github.com/speedyapply/JobSpy/tree/main/jobspy)
+- [**Indeed** Docs](https://docs.indeed.com)
