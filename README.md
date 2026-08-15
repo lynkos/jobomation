@@ -116,18 +116,6 @@ For one subsystem, such as [`models.py`](src/jobomation/models.py):
    ```
 
 ## Miscellaneous
-### TODOs
-- [ ] Dashboard filter visibility
-- [ ] Board synchronization / inactive detection
-- [ ] More collectors:
-  - [x] Indeed
-  - [ ] Lever
-  - [ ] LinkedIn
-- [ ] Location + compensation filters
-- [ ] Candidate profile
-- [ ] LLM-based semantic scoring
-- [ ] Ranking / inbox
-
 ### Design Doc
 See [Design Doc](DESIGN.md) for more details.
 
