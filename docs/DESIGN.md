@@ -35,6 +35,9 @@ The system will:
 * Store application data locally.
 * Support relocation of persistent data, including to external storage.
 * Allow different LLM implementations to be evaluated or substituted without redesigning the application.
+* Expose selected application capabilities and data through a Model Context Protocol (MCP) server.
+* Represent selected job-market relationships as a knowledge graph for graph-aware retrieval and reasoning.
+* Allow MCP clients or agents to query both canonical job data and graph relationships without bypassing application-layer constraints.
 
 ### Solution Requirements (Goals)
 
@@ -90,6 +93,15 @@ The system should eventually answer questions such as:
 
 **G11 — Remain extensible.**
 Adding a new employer, job source, evaluator, ranking strategy, or UI should not require substantial changes to unrelated components.
+
+**G12 — Provide a standards-based AI integration surface.**
+The system should expose a useful subset of its data and operations through MCP so that compatible clients and agents can query Jobomation without coupling directly to its internal Python APIs or SQLite schema.
+
+**G13 — Support graph-aware job-market reasoning.**
+The system should represent relationships among jobs, companies, skills, locations, and role families in a knowledge graph that can support traversal, contextual retrieval, and LLM-assisted reasoning.
+
+**G14 — Keep MCP and graph features grounded in canonical application state.**
+MCP tools/resources and graph projections should derive from canonical Jobomation models and persisted state rather than becoming independent sources of truth.
 
 ### Out of scope (Non-goals)
 
@@ -212,6 +224,8 @@ jobintel/
 ├── dashboard/
 ├── persistence/
 ├── scheduling/
+├── mcp/
+├── knowledge_graph/
 └── config/
 ```
 
@@ -294,6 +308,51 @@ OpenAICompatibleProvider
 
 The evaluator should depend on `LLMProvider`, not directly on an SDK.
 
+#### MCP server interface
+
+Jobomation should expose a standards-based MCP server over selected application-layer capabilities.
+
+Initial tools may include:
+
+```text
+search_jobs(...)
+get_job(...)
+list_targets()
+query_job_graph(...)
+```
+
+Representative behavior:
+
+* `search_jobs(...)` queries canonical persisted jobs using structured criteria such as title, company, location, active/filter state, skills, or evaluation metadata.
+* `get_job(...)` retrieves the canonical representation of a specific job together with available extracted requirements and evaluation context.
+* `list_targets()` exposes configured collection targets and source types.
+* `query_job_graph(...)` performs bounded graph traversal or relationship queries over the job-market knowledge graph.
+
+Initial resources may include:
+
+```text
+job://<source>/<id>
+schema://jobs
+graph://job/<id>
+graph://skill/<name>
+```
+
+The MCP layer should delegate to existing application services and repositories rather than implementing independent persistence, filtering, ranking, or business logic.
+
+The initial MCP surface should be primarily read/query oriented. Any future mutating tools must preserve Jobomation's human-control guarantees and authorization boundaries.
+
+#### MCP client / agent integration
+
+At least one MCP-compatible client or agent should be able to connect to the server and answer queries such as:
+
+```text
+Find currently active infrastructure jobs that match Python + Terraform and explain why.
+```
+
+The client should obtain evidence through MCP tools/resources rather than receiving direct database access.
+
+The MCP integration is an interface layer, not a replacement for deterministic filtering, canonical storage, evaluation, or ranking.
+
 #### User-action interface
 
 The dashboard should expose application-layer operations such as:
@@ -355,7 +414,13 @@ application_events
 
 collector_runs
 model_invocations
+
+knowledge_nodes
+knowledge_edges
+knowledge_graph_versions
 ```
+
+The knowledge-graph tables may initially be implemented in SQLite as a projection over canonical application state. A dedicated graph database is optional and should be justified by query complexity, scale, or operational requirements rather than assumed up front.
 
 #### Job
 
@@ -402,6 +467,47 @@ parser_version
 ```
 
 This allows normalization/parsing bugs to be corrected without reacquiring historical postings.
+
+#### Job-market knowledge graph
+
+The system should maintain a graph representation of selected job-market entities and relationships.
+
+Initial node types:
+
+```text
+Job
+Company
+Skill
+Location
+RoleFamily
+```
+
+Initial relationships:
+
+```text
+Job     -[:REQUIRES]->        Skill
+Job     -[:PREFERS]->         Skill
+Job     -[:POSTED_BY]->       Company
+Job     -[:LOCATED_IN]->      Location
+Job     -[:HAS_ROLE_FAMILY]-> RoleFamily
+Skill   -[:RELATED_TO]->      Skill
+```
+
+Additional relationships may be introduced only when they have a clear retrieval, ranking, analytics, or reasoning use case.
+
+The graph should be treated as a derived representation of canonical application state. Canonical jobs, extracted requirements, and other persisted records remain the source of truth.
+
+Graph construction should therefore be repeatable and versioned. Changes to extraction logic, ontology, or graph-building rules should permit the graph to be rebuilt without corrupting historical application data.
+
+Possible uses include:
+
+* discovering jobs through related skills rather than title keywords;
+* identifying unusual but credible role-family matches;
+* traversing from a candidate skill to related skills and then to jobs;
+* explaining why a job was surfaced;
+* providing structured context to LLMs and MCP clients.
+
+A dedicated graph database such as Neo4j may be evaluated later. The initial design should not require one.
 
 #### Evaluation
 
@@ -545,6 +651,32 @@ ORDER BY
     posted_at DESC;
 ```
 
+#### Knowledge-graph projection
+
+A graph projection may be rebuilt or incrementally updated from canonical records:
+
+```python
+def project_job_to_graph(job_id: JobId) -> None:
+    job = repository.get_job(job_id)
+    extracted = requirement_repository.get_latest(job_id)
+
+    upsert_node("Job", job.id, title=job.title)
+    upsert_node("Company", job.company_id)
+    add_edge("Job", job.id, "POSTED_BY", "Company", job.company_id)
+
+    if job.location:
+        location_id = canonicalize_location(job.location)
+        upsert_node("Location", location_id)
+        add_edge("Job", job.id, "LOCATED_IN", "Location", location_id)
+
+    for skill in extracted.required_skills:
+        skill_id = canonicalize_skill(skill)
+        upsert_node("Skill", skill_id)
+        add_edge("Job", job.id, "REQUIRES", "Skill", skill_id)
+```
+
+Graph queries should be bounded and deterministic where possible. LLMs may synthesize or explain graph results, but should not fabricate missing nodes or edges.
+
 #### Evaluation caching
 
 LLM evaluation should be cacheable using a key derived from:
@@ -656,6 +788,10 @@ Business logic must not directly depend on a specific model vendor.
 
 Source data should remain available for debugging and reprocessing.
 
+**Canonical-state-backed MCP and graph layers**
+
+MCP tools/resources and knowledge-graph projections must derive from canonical application services and persisted state rather than becoming independent systems of record.
+
 #### Intentionally unconstrained
 
 The following remain implementation choices:
@@ -673,7 +809,10 @@ The following remain implementation choices:
 * vector search;
 * notification mechanism;
 * API framework;
-* deployment packaging.
+* deployment packaging;
+* MCP client implementation;
+* knowledge-graph storage engine;
+* graph-query implementation.
 
 Technology should be introduced when requirements justify it rather than because it appears in the initial architecture.
 
@@ -737,6 +876,53 @@ raw posting
 ```
 
 against a temporary SQLite database.
+
+#### MCP contract tests
+
+Test the MCP server independently from any particular LLM client.
+
+Cover:
+
+```text
+tool discovery and schemas
+resource discovery and URI handling
+valid structured queries
+invalid arguments
+unknown job/resource identifiers
+database/repository failures
+serialization
+bounded graph queries
+```
+
+Tests should verify that MCP tools return the same underlying application data and business-rule outcomes as direct application-layer calls.
+
+#### Knowledge-graph tests
+
+Test graph construction and traversal using deterministic fixtures.
+
+Verify:
+
+* canonical entities produce the expected nodes and edges;
+* duplicate skills/companies/locations are canonicalized correctly;
+* graph rebuilds are reproducible;
+* removed or changed jobs update graph state correctly;
+* graph queries do not invent relationships;
+* bounded traversals return stable results.
+
+Representative graph queries should include:
+
+```text
+jobs requiring Python
+jobs related to Terraform through related skills
+infrastructure-role jobs in a target location
+jobs posted by a specific company
+```
+
+#### MCP client / agent integration tests
+
+Run at least one MCP-compatible client or agent against a test server and verify end-to-end behavior for representative natural-language requests.
+
+The test should ensure that answers are grounded in tool/resource results and that failures are surfaced rather than silently replaced with unsupported model output.
 
 #### LLM evaluation tests
 
@@ -827,6 +1013,14 @@ Rejected as the initial architecture.
 
 SQLite is preferred initially. Database abstraction should avoid making future migration unnecessarily difficult.
 
+### Dedicated graph database
+
+**Advantages:** native graph traversal, expressive graph query languages, visualization/tooling, and straightforward representation of multi-hop relationships.
+
+**Disadvantages:** adds another datastore and operational dependency, duplicates some canonical state, and may be unnecessary at single-user/local scale.
+
+A dedicated graph database such as Neo4j is optional. The initial graph may be stored or projected using SQLite/in-memory structures, provided the graph abstraction does not preclude later migration.
+
 ### React/Next.js frontend
 
 **Advantages:** maximum UI flexibility and mature frontend ecosystem.
@@ -901,6 +1095,10 @@ Not justified initially. Prompted instruction models should first establish base
 
 **Portability.** Persistent state should not depend on absolute paths beyond explicit configuration. Database relocation and backup should remain straightforward.
 
+**MCP safety and authority.** MCP is an interface into Jobomation, not an authority escalation mechanism. Tools should expose only intended operations, validate inputs, and preserve explicit human control over consequential actions.
+
+**Graph provenance.** Graph nodes and edges should be traceable to canonical records, extraction outputs, or explicit ontology rules. LLM-generated hypotheses must not be persisted as factual graph relationships without an explicit validation step.
+
 **Observability.** Structured logs and execution records should make it possible to answer:
 
 ```text
@@ -914,7 +1112,19 @@ Why did it receive this ranking?
 ```
 
 ## Milestones / Rollout Plan
-One thing I'd add to your template eventually is a short **Milestones** section, even if your design-doc format doesn't normally include one. This project has a very natural sequence—collector → canonical storage → filtering → AI evaluation → dashboard → feedback → analytics → application assistance—and explicitly preventing yourself from building the entire vision before you have an end-to-end vertical slice will probably be useful.
+
+A practical rollout sequence is:
+
+1. **Canonical collection vertical slice** — collector → raw preservation → normalization → SQLite → dashboard.
+2. **Deterministic decision support** — structured extraction, eligibility/preference rules, filtering, and explanations.
+3. **Semantic evaluation and ranking** — candidate profile, provider-independent LLM interface, cached/versioned evaluations, ranking inbox.
+4. **MCP interface** — expose job search, retrieval, targets, schemas, and related contextual resources through MCP.
+5. **Knowledge graph** — project jobs, companies, skills, locations, and role families into a graph and add bounded traversal/query support.
+6. **MCP + graph agent workflow** — allow an MCP-compatible client or agent to answer grounded job-search questions using canonical data and graph traversal.
+7. **Feedback and analytics** — review decisions, application lifecycle, ranking evaluation, and job-search funnel analytics.
+8. **Application assistance** — optional form-filling or other user-approved assistance without autonomous submission.
+
+Each milestone should preserve an end-to-end useful system rather than requiring the entire envisioned architecture to be complete before Jobomation is usable.
 
 ## References
 
