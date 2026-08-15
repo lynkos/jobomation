@@ -179,3 +179,27 @@ See [Design Doc](DESIGN.md) for more details.
 └── pyproject.toml
 </pre>
 </details>
+
+### Priority
+1. **Now**: [`#2` (board sync)](https://github.com/lynkos/jobomation/issues/2), [`#7` (raw/canonical persistence)](https://github.com/lynkos/jobomation/issues/7)
+2. **Next**:
+   - **When #2 is done**: [`#4` (candidate profile)](https://github.com/lynkos/jobomation/issues/4)
+   - **When #7 is done**: [`#8` (structured extraction / job requirements and metadata)](https://github.com/lynkos/jobomation/issues/8)
+3. [`#10` (deterministic constraints)](https://github.com/lynkos/jobomation/issues/10)
+4. [`#27` (MCP server core)](https://github.com/lynkos/jobomation/issues/27)
+5. [`#28` (knowledge graph)](https://github.com/lynkos/jobomation/issues/28)
+6. [`#29` (MCP client/agent workflow)](https://github.com/lynkos/jobomation/issues/29)
+7. [`#11` (provider abstraction)](https://github.com/lynkos/jobomation/issues/11)
+8. [`#20` (evaluation benchmark)](https://github.com/lynkos/jobomation/issues/20)
+9.  [`#5` (semantic evaluation)](https://github.com/lynkos/jobomation/issues/5)
+10. [`#12` (evaluation versioning)](https://github.com/lynkos/jobomation/issues/12)
+11. [`#13` (caching/re-evaluation)](https://github.com/lynkos/jobomation/issues/13)
+12. [`#6` (ranking/inbox)](https://github.com/lynkos/jobomation/issues/6)
+13. [`#14` (review feedback)](https://github.com/lynkos/jobomation/issues/14)
+14. [`#1` (dashboard polish)](https://github.com/lynkos/jobomation/issues/1)
+
+> [!NOTE]
+> * Start [`#27`](https://github.com/lynkos/jobomation/issues/27) before [`#28`](https://github.com/lynkos/jobomation/issues/28), implementing `search_jobs`, `get_job`, `list_targets`, `job://...`, and `schema://jobs`. Then build [`#28`](https://github.com/lynkos/jobomation/issues/28). After that, finish the graph-dependent portions of [`#27`](https://github.com/lynkos/jobomation/issues/27) (`query_job_graph`, `graph://...`) and do [`#29`](https://github.com/lynkos/jobomation/issues/29).
+> * Reasoning: Legitimate MCP work earlier without inventing a graph abstraction before the underlying structured data exists.
+> * Don't label [`#19 (add collector contract and pipeline integration tests)`](https://github.com/lynkos/jobomation/issues/19), [`#17 (portability)`](https://github.com/lynkos/jobomation/issues/17), or [`#26 (ADRs)`](https://github.com/lynkos/jobomation/issues/26) as `next`.
+> * Testing should accompany implementation work rather than compete with the main feature queue.
