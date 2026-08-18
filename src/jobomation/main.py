@@ -17,7 +17,7 @@ def main() -> None:
             print(f"Unsupported source: {target.source}")
             continue
 
-        try: jobs = collector(**target.args)
+        try: jobs = collector(**target.args).fetch_jobs()
         except Exception as error:
             print(f"Failed to collect {target.name} from {target.source}: {error}")
             continue

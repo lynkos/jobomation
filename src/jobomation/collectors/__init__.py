@@ -1,9 +1,12 @@
-from jobomation.collectors.ashby import fetch_jobs as fetch_ashby_jobs
-from jobomation.collectors.greenhouse import fetch_jobs as fetch_greenhouse_jobs
-from jobomation.collectors.indeed import fetch_jobs as fetch_indeed_jobs
+from jobomation.collectors.ashby import AshbyCollector
+from jobomation.collectors.greenhouse import GreenhouseCollector
+from jobomation.collectors.indeed import IndeedCollector
 
 COLLECTORS = {
-    "greenhouse": fetch_greenhouse_jobs,
-    "ashby": fetch_ashby_jobs,
-    "indeed": fetch_indeed_jobs
+    collector.source: collector
+    for collector in (
+        AshbyCollector,
+        GreenhouseCollector,
+        IndeedCollector
+    )
 }

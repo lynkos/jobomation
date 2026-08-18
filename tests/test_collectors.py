@@ -1,6 +1,15 @@
 from unittest.mock import Mock
-from jobomation.collectors import ashby, greenhouse, indeed, COLLECTORS
+
+from jobomation.collectors import (
+    COLLECTORS,
+    AshbyCollector,
+    GreenhouseCollector,
+    IndeedCollector,
+)
+from jobomation.collectors import ashby, greenhouse, indeed
+from jobomation.collectors.base import Collector
 from jobomation.collectors.utils import clean_description
+
 
 def greenhouse_raw_job(job_id=123):
     return {
@@ -17,7 +26,9 @@ def greenhouse_raw_job(job_id=123):
             "&lt;h2&gt;About&lt;/h2&gt;"
             "&lt;p&gt;Build software &amp; systems.&lt;/p&gt;"
         ),
+        "pay_input_ranges": [],
     }
+
 
 def ashby_raw_job(job_id="abc-123"):
     return {
@@ -27,7 +38,20 @@ def ashby_raw_job(job_id="abc-123"):
         "jobUrl": f"https://jobs.ashbyhq.com/example/{job_id}",
         "publishedAt": "2026-08-01T12:00:00+00:00",
         "descriptionPlain": "Build software and systems.",
+        "compensation": {
+            "summaryComponents": [
+                {
+                    "compensationType": "Salary",
+                    "minValue": 100_000,
+                    "maxValue": 150_000,
+                    "currencyCode": "USD",
+                    "interval": "YEAR",
+                }
+            ],
+            "compensationTierSummary": "$100K – $150K",
+        },
     }
+
 
 def indeed_raw_job(job_id="abc123"):
     return {
@@ -59,7 +83,8 @@ def indeed_raw_job(job_id="abc123"):
         "recruit": None,
     }
 
-def test_greenhouse_clean_description():
+
+def test_clean_description():
     content = (
         "&lt;h2&gt;About&lt;/h2&gt;"
         "&lt;p&gt;Hello &amp; goodbye&lt;/p&gt;"
@@ -71,8 +96,10 @@ def test_greenhouse_clean_description():
     assert "Hello & goodbye" in result
     assert "<h2>" not in result
 
+
 def test_greenhouse_raw_to_job():
-    job = greenhouse._raw_to_job(greenhouse_raw_job())
+    collector = GreenhouseCollector("example")
+    job = collector._raw_to_job(greenhouse_raw_job())
 
     assert job.source == "greenhouse"
     assert job.source_job_id == "123"
@@ -81,22 +108,20 @@ def test_greenhouse_raw_to_job():
     assert job.location == "Boston, MA"
     assert job.description == "About\nBuild software & systems."
 
+
 def test_greenhouse_fetch_job(monkeypatch):
     response = Mock()
     response.json.return_value = greenhouse_raw_job(42)
 
     mocked_get = Mock(return_value=response)
+    monkeypatch.setattr(greenhouse, "get_request", mocked_get)
 
-    monkeypatch.setattr(
-        greenhouse.httpx,
-        "get",
-        mocked_get,
-    )
-
-    job = greenhouse.fetch_job("example", 42)
+    collector = GreenhouseCollector("example")
+    job = collector.fetch_job(42)
 
     mocked_get.assert_called_once_with(
-        f"{greenhouse.JOB_COLLECTOR_URL}/example/jobs/42"
+        f"{collector.api_url}/example/jobs/42",
+        params={"pay_transparency": "true"},
     )
 
     response.raise_for_status.assert_called_once()
@@ -113,19 +138,17 @@ def test_greenhouse_fetch_jobs(monkeypatch):
     }
 
     mocked_get = Mock(return_value=response)
+    monkeypatch.setattr(greenhouse, "get_request", mocked_get)
 
-    monkeypatch.setattr(
-        greenhouse.httpx,
-        "get",
-        mocked_get,
-    )
+    collector = GreenhouseCollector("example")
+    jobs = collector.fetch_jobs()
 
-    jobs = greenhouse.fetch_jobs("example")
+    mocked_get.assert_called_once()
 
-    mocked_get.assert_called_once_with(
-        f"{greenhouse.JOB_COLLECTOR_URL}/example/jobs",
-        params={"content": "true"},
-    )
+    _, kwargs = mocked_get.call_args
+
+    assert kwargs["params"]["content"] == "true"
+    assert kwargs["params"]["pay_transparency"] == "true"
 
     response.raise_for_status.assert_called_once()
 
@@ -134,10 +157,8 @@ def test_greenhouse_fetch_jobs(monkeypatch):
     assert jobs[1].source_job_id == "2"
 
 def test_ashby_raw_to_job():
-    job = ashby._raw_to_job(
-        "example",
-        ashby_raw_job(),
-    )
+    collector = AshbyCollector("example")
+    job = collector._raw_to_job(ashby_raw_job())
 
     assert job.source == "ashby"
     assert job.source_job_id == "abc-123"
@@ -155,19 +176,16 @@ def test_ashby_fetch_jobs(monkeypatch):
     }
 
     mocked_get = Mock(return_value=response)
+    monkeypatch.setattr(ashby, "get_request", mocked_get)
 
-    monkeypatch.setattr(
-        ashby.httpx,
-        "get",
-        mocked_get,
-    )
+    collector = AshbyCollector("ramp")
+    jobs = collector.fetch_jobs()
 
-    jobs = ashby.fetch_jobs("ramp")
+    mocked_get.assert_called_once()
 
-    mocked_get.assert_called_once_with(
-        f"{ashby.JOB_COLLECTOR_URL}/ramp",
-        params={"includeCompensation": "true"},
-    )
+    _, kwargs = mocked_get.call_args
+
+    assert kwargs["params"]["includeCompensation"] == "true"
 
     response.raise_for_status.assert_called_once()
 
@@ -175,9 +193,12 @@ def test_ashby_fetch_jobs(monkeypatch):
     assert all(job.source == "ashby" for job in jobs)
 
 def test_indeed_raw_to_job():
-    raw = indeed_raw_job()
+    collector = IndeedCollector(
+        search_term="software engineer",
+        location="Boston, MA",
+    )
 
-    job = indeed._raw_to_job(raw)
+    job = collector._raw_to_job(indeed_raw_job())
 
     assert job.source == "indeed"
     assert job.source_job_id == "abc123"
@@ -188,26 +209,23 @@ def test_indeed_raw_to_job():
     assert job.updated_at is None
     assert "Build software and systems." in job.description
 
+
 def test_indeed_build_query():
-    query = indeed._build_query(
+    collector = IndeedCollector(
+            search_term="software engineer",
+            location="Boston, MA",
+            radius=200
+        )
+    query = collector._build_query(
         search_term="software engineer",
         location="Boston, MA",
-        cursor="cursor-123",
-        radius=200
+        cursor="cursor-123"
     )
 
     assert 'what: "software engineer"' in query
     assert 'where: "Boston, MA"' in query
     assert 'cursor: "cursor-123"' in query
-    assert 'radius: 200' in query
-
-def test_indeed_build_query_uses_default_radius():
-    query = indeed._build_query(
-        search_term="software engineer",
-        location="Boston, MA",
-    )
-
-    assert f"radius: {indeed.RADIUS}" in query
+    assert "radius: 200" in query
 
 def test_indeed_fetch_page(monkeypatch):
     response = Mock()
@@ -233,16 +251,19 @@ def test_indeed_fetch_page(monkeypatch):
     mocked_post = Mock(return_value=response)
 
     monkeypatch.setattr(
-        indeed.httpx,
-        "post",
+        indeed,
+        "post_request",
         mocked_post,
     )
+    monkeypatch.setenv("INDEED_API_KEY", "test-key")
 
-    results, cursor = indeed._fetch_page(
+    collector = IndeedCollector(
         search_term="software engineer",
         location="Boston, MA",
         radius=200,
     )
+
+    results, cursor = collector._fetch_page()
 
     response.raise_for_status.assert_called_once()
 
@@ -251,13 +272,15 @@ def test_indeed_fetch_page(monkeypatch):
 
     args, kwargs = mocked_post.call_args
 
-    assert args[0] == indeed.INDEED_API_URL
+    assert args[0] == collector.api_url
+    assert kwargs["timeout"] == collector.timeout
 
     query = kwargs["json"]["query"]
 
     assert 'what: "software engineer"' in query
     assert 'where: "Boston, MA"' in query
-    assert 'radius: 200' in query
+    assert "radius: 200" in query
+
 
 def test_indeed_fetch_jobs(monkeypatch):
     first_page = [
@@ -276,18 +299,20 @@ def test_indeed_fetch_jobs(monkeypatch):
         ]
     )
 
-    monkeypatch.setattr(
-        indeed,
-        "_fetch_page",
-        mocked_fetch_page,
-    )
-
-    jobs = indeed.fetch_jobs(
+    collector = IndeedCollector(
         search_term="software engineer",
         location="Boston, MA",
         radius=200,
         results_wanted=3,
     )
+
+    monkeypatch.setattr(
+        collector,
+        "_fetch_page",
+        mocked_fetch_page,
+    )
+
+    jobs = collector.fetch_jobs()
 
     assert [job.source_job_id for job in jobs] == [
         "one",
@@ -297,57 +322,49 @@ def test_indeed_fetch_jobs(monkeypatch):
 
     assert mocked_fetch_page.call_count == 2
 
-    mocked_fetch_page.assert_any_call(
-        search_term="software engineer",
-        location="Boston, MA",
-        radius=200,
-        cursor=None,
-    )
+    mocked_fetch_page.assert_any_call(None)
+    mocked_fetch_page.assert_any_call("cursor-2")
 
-    mocked_fetch_page.assert_any_call(
-        search_term="software engineer",
-        location="Boston, MA",
-        radius=200,
-        cursor="cursor-2",
-    )
 
 def test_indeed_fetch_jobs_deduplicates(monkeypatch):
     mocked_fetch_page = Mock(
-        side_effect=[
-            (
-                [
-                    {"job": indeed_raw_job("one")},
-                    {"job": indeed_raw_job("one")},
-                ],
-                None,
-            )
-        ]
+        return_value=(
+            [
+                {"job": indeed_raw_job("one")},
+                {"job": indeed_raw_job("one")},
+            ],
+            None,
+        )
     )
 
-    monkeypatch.setattr(
-        indeed,
-        "_fetch_page",
-        mocked_fetch_page,
-    )
-
-    jobs = indeed.fetch_jobs(
+    collector = IndeedCollector(
         search_term="software engineer",
         location="Boston, MA",
         radius=200,
         results_wanted=100,
     )
 
+    monkeypatch.setattr(
+        collector,
+        "_fetch_page",
+        mocked_fetch_page,
+    )
+
+    jobs = collector.fetch_jobs()
+
     assert len(jobs) == 1
     assert jobs[0].source_job_id == "one"
 
-    mocked_fetch_page.assert_called_once_with(
-        search_term="software engineer",
-        location="Boston, MA",
-        radius=200,
-        cursor=None,
-    )
+    mocked_fetch_page.assert_called_once_with(None)
+
+
+def test_collectors_inherit_from_base():
+    assert issubclass(GreenhouseCollector, Collector)
+    assert issubclass(AshbyCollector, Collector)
+    assert issubclass(IndeedCollector, Collector)
+
 
 def test_collector_registry():
-    assert COLLECTORS["greenhouse"] is greenhouse.fetch_jobs
-    assert COLLECTORS["ashby"] is ashby.fetch_jobs
-    assert COLLECTORS["indeed"] is indeed.fetch_jobs
+    assert COLLECTORS["greenhouse"] is GreenhouseCollector
+    assert COLLECTORS["ashby"] is AshbyCollector
+    assert COLLECTORS["indeed"] is IndeedCollector
