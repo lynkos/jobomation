@@ -1,10 +1,11 @@
-from httpx import post as post_request
+from httpx import Response, post as post_request
 from os import getenv
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from jobomation.models import Compensation, Job
 from jobomation.collectors.base import Collector
 from jobomation.collectors.utils import clean_description
+from jobomation.exceptions import CollectorConfigError
 
 JOB_SEARCH_QUERY = """
 query GetJobData {{
@@ -93,6 +94,7 @@ class IndeedCollector(Collector):
     source = "indeed"
     api_url = "https://apis.indeed.com/graphql"
     base_url = "https://www.indeed.com"
+    default_radius = 50
 
     def __init__(
         self,
@@ -100,38 +102,31 @@ class IndeedCollector(Collector):
         search_term: str,
         location: str,
         results_wanted: int = 100,
-        radius: int = 50,
-        timeout: int = 10
+        radius: int = default_radius
     ) -> None:
         self.search_term = search_term
         self.location = location
         self.results_wanted = results_wanted
         self.radius = radius
-        self.timeout = timeout
 
-    def _fetch_page(self, cursor: str | None = None) -> tuple[list[dict], str | None]:
-        query = self._build_query(
-            search_term = self.search_term,
-            location = self.location,
-            cursor = cursor
-        )
+    def _send_request(self, cursor: str | None = None) -> Response:
+        query = self._build_query(search_term = self.search_term, location = self.location, cursor = cursor, radius = self.radius)
 
-        response = post_request(
+        return post_request(
             self.api_url,
             headers = self._headers(),
             json = { "query": query },
             timeout = self.timeout
         )
-        response.raise_for_status()
 
-        job_search = response.json()["data"]["jobSearch"]
-
+    def _fetch_page(self, cursor: str | None = None) -> tuple[list[dict], str | None]:
+        job_search = self.get_response(cursor)["data"]["jobSearch"]
         return (job_search["results"], job_search["pageInfo"]["nextCursor"])
 
     def _headers(self) -> dict[str, str]:
         api_key = getenv("INDEED_API_KEY")
         
-        if not api_key: raise Exception("No Indeed API Key found!")
+        if not api_key: raise CollectorConfigError("No Indeed API Key found!")
         
         return {
             "content-type": "application/json",
@@ -144,7 +139,7 @@ class IndeedCollector(Collector):
             "indeed-app-info": "appv=193.1; appid=com.indeed.jobsearch; osv=16.6.1; os=ios; dtype=phone",
         }
 
-    def _build_query(self, search_term: str | None = None, location: str | None = None, cursor: str | None = None) -> str:
+    def _build_query(self, search_term: str | None = None, location: str | None = None, cursor: str | None = None, radius: int = default_radius) -> str:
         what = ""
         location_query = ""
         cursor_query = ""
@@ -157,7 +152,7 @@ class IndeedCollector(Collector):
             escaped = location.replace('"', '\\"')
             location_query = (
                 f'location: {{where: "{escaped}", '
-                f'radius: {self.radius}, radiusUnit: MILES}}'
+                f'radius: {radius}, radiusUnit: MILES}}'
             )
 
         if cursor: cursor_query = f'cursor: "{cursor}"'

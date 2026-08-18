@@ -1,4 +1,4 @@
-from httpx import get as get_request
+from httpx import Response, get as get_request
 from jobomation.collectors.base import Collector
 from jobomation.models import Compensation, Job
 from jobomation.collectors.utils import clean_description
@@ -36,22 +36,20 @@ class GreenhouseCollector(Collector):
             compensation = self._raw_to_compensation(raw["pay_input_ranges"]) if raw["pay_input_ranges"] else None
         )
 
-    def fetch_jobs(self) -> list[Job]:
-        response = get_request(
-            url = f"{self.api_url}/{self.board}/jobs",
+    def _send_request(self, job_id: int | str | None = None) -> Response:
+        if job_id is not None:
+            url = f"{self.api_url}/{self.board}/jobs/{job_id}"
+            params = { "pay_transparency": "true" }
+
+        else:
+            url = f"{self.api_url}/{self.board}/jobs"
             params = { "content": "true", "pay_transparency": "true" }
-        )
-        response.raise_for_status()
 
-        raw_jobs = response.json()["jobs"]
-
-        return [self._raw_to_job(raw) for raw in raw_jobs]
+        return get_request(url, params = params, timeout = self.timeout)
 
     def fetch_job(self, job_id: int | str) -> Job:
-        url = f"{self.api_url}/{self.board}/jobs/{job_id}"
+        return self._raw_to_job(self.get_response(job_id))
 
-        response = get_request(url, params = { "pay_transparency": "true" })
-        response.raise_for_status()
-        raw_job = response.json()
-
-        return self._raw_to_job(raw_job)
+    def fetch_jobs(self) -> list[Job]:
+        raw_jobs = self.get_response()["jobs"]
+        return [self._raw_to_job(raw) for raw in raw_jobs]

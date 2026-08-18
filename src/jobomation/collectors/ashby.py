@@ -1,4 +1,4 @@
-from httpx import get as get_request
+from httpx import Response, get as get_request
 from jobomation.collectors.base import Collector
 from jobomation.models import Compensation, Job
 
@@ -43,13 +43,14 @@ class AshbyCollector(Collector):
             compensation = self._raw_to_compensation(raw["compensation"])
         )
 
-    def fetch_jobs(self) -> list[Job]:
-        response = get_request(
+    def _send_request(self) -> Response:
+        return get_request(
             url = f"{self.api_url}/{self.board}",
-            params = {"includeCompensation": "true"},
+            params = { "includeCompensation": "true" },
+            timeout = self.timeout
         )
-        response.raise_for_status()
 
-        raw_jobs = response.json()["jobs"]
+    def fetch_jobs(self) -> list[Job]:
+        raw_jobs = self.get_response()["jobs"]
 
         return [self._raw_to_job(raw) for raw in raw_jobs]
