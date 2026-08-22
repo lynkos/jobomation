@@ -1,5 +1,5 @@
 from httpx import Response, get as get_request
-from jobomation.collectors.base import Collector
+from jobomation.models import Collector
 from jobomation.models import Compensation, Job
 
 class AshbyCollector(Collector):

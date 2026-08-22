@@ -3,7 +3,7 @@ from os import getenv
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from jobomation.models import Compensation, Job
-from jobomation.collectors.base import Collector
+from jobomation.models import Collector
 from jobomation.collectors.utils import clean_description
 from jobomation.exceptions import CollectorConfigError
 

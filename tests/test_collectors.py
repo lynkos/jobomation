@@ -7,7 +7,7 @@ from jobomation.collectors import (
     IndeedCollector,
 )
 from jobomation.collectors import ashby, greenhouse, indeed
-from jobomation.collectors.base import Collector
+from jobomation.models import Collector
 from jobomation.collectors.utils import clean_description
 
 
