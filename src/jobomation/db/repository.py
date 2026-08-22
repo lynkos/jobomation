@@ -30,6 +30,24 @@ def _build_upsert_query(columns: tuple[str, ...]) -> str:
             active = TRUE
     """
 
+def mark_job_seen(*, source: str, source_job_id: str) -> None:
+    last_seen_at = datetime.now(timezone.utc).isoformat()
+
+    with connect() as connection:
+        connection.execute(
+            """
+            UPDATE jobs
+            SET last_seen_at = :last_seen_at
+            WHERE source = :source
+            AND source_job_id = :source_job_id
+            """,
+            {
+                "last_seen_at": last_seen_at,
+                "source": source,
+                "source_job_id": source_job_id,
+            },
+        )
+
 def save_job(job: Job) -> None:
     seen_at = datetime.now(timezone.utc)
     record = job_to_record(job, seen_at = seen_at)

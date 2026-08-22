@@ -1,6 +1,6 @@
 import dash_ag_grid as dag
 from dash import Dash, Input, Output, dcc, html
-from jobomation.db.repository import get_jobs, set_job_active
+from jobomation.db.repository import get_jobs, set_job_active, mark_job_seen
 
 HEIGHT = 500
 WIDTH = "100%"
@@ -42,11 +42,7 @@ def job_to_row(job) -> dict:
         "location": job.location,
         "first_published": job.first_published,
         "compensation": format_compensation(job.compensation),
-        "compensation_description": (
-            job.compensation.description
-            if job.compensation
-            else None
-        ),
+        "compensation_description": job.compensation.description if job.compensation else None,
         "filtered": job.filtered,
         "filter_reason": job.filter_reason,
         "url": job.url,
@@ -82,22 +78,22 @@ def update_job_active(events):
         row = event["data"]
 
         set_job_active(
-            source=row["source"],
-            source_job_id=row["source_job_id"],
-            active=row["active"],
+            source = row["source"],
+            source_job_id = row["source_job_id"],
+            active = row["active"],
         )
 
 def create_app() -> Dash:
-    app = Dash(__name__, title=TITLE)
+    app = Dash(__name__, title = TITLE)
 
-    jobs = get_jobs(filtered=False)
-    rows = [job_to_row(job) for job in jobs]
+    jobs = get_jobs(filtered = False)
+    rows = [ job_to_row(job) for job in jobs ]
 
     app.layout = html.Div(
         [
             html.H1(
                 TITLE,
-                style={
+                style = {
                     "textAlign": "center",
                     "fontSize": HEADER_SIZE,
                     "fontFamily": FONT_FAMILY,
@@ -105,30 +101,30 @@ def create_app() -> Dash:
             ),
 
             dcc.Checklist(
-                id="show-filtered",
-                options=[
+                id = "show-filtered",
+                options = [
                     {
                         "label": "Include filtered jobs",
                         "value": "show",
                     }
                 ],
-                style={
+                style = {
                     "fontSize": FONT_SIZE,
                     "fontFamily": FONT_FAMILY,
                 },
-                value=[],
+                value = [ ],
             ),
 
             dag.AgGrid(
-                id="jobs-grid",
-                rowData=rows,
-                getRowId="params.data.source + ':' + params.data.source_job_id",
-                columnDefs=BASE_COLUMN_DEFS,
-                defaultColDef={
+                id = "jobs-grid",
+                rowData = rows,
+                getRowId = "params.data.source + ':' + params.data.source_job_id",
+                columnDefs = BASE_COLUMN_DEFS,
+                defaultColDef = {
                     "sortable": True,
                     "resizable": True,
                 },
-                dashGridOptions={
+                dashGridOptions = {
                     "pagination": True,
                     "paginationPageSize": PAGINATION,
                     "theme": THEME,
@@ -137,15 +133,15 @@ def create_app() -> Dash:
                         "enableClickSelection": True,
                     },
                 },
-                style={
+                style = {
                     "height": HEIGHT,
                     "width": WIDTH,
                 },
             ),
 
             html.Div(
-                id="job-details",
-                style={
+                id = "job-details",
+                style = {
                     "fontFamily": FONT_FAMILY,
                 },
             ),
@@ -162,7 +158,7 @@ def create_app() -> Dash:
             jobs = get_jobs()
             visible_columns = BASE_COLUMN_DEFS + FILTER_COLUMN_DEFS
         else:
-            jobs = get_jobs(filtered=False)
+            jobs = get_jobs(filtered = False)
             visible_columns = BASE_COLUMN_DEFS
 
         return (
@@ -178,6 +174,8 @@ def create_app() -> Dash:
         if not selected_rows: return html.P("Select a job to view details.")
 
         job = selected_rows[0]
+
+        mark_job_seen(source = job["source"], source_job_id = job["source_job_id"])
 
         return html.Div(
             [
@@ -227,8 +225,8 @@ def create_app() -> Dash:
                 html.P(
                     html.A(
                         "Open job posting",
-                        href=job["url"],
-                        target="_blank",
+                        href = job["url"],
+                        target = "_blank",
                     )
                 ),
 
@@ -236,7 +234,7 @@ def create_app() -> Dash:
 
                 html.Div(
                     job["description"],
-                    style={
+                    style = {
                         "whiteSpace": "pre-wrap",
                         "lineHeight": LINE_HEIGHT,
                     },
@@ -246,7 +244,7 @@ def create_app() -> Dash:
 
     app.callback(
         Input("jobs-grid", "cellValueChanged"),
-        prevent_initial_call=True,
+        prevent_initial_call = True,
     )(update_job_active)
     
     return app
@@ -254,4 +252,4 @@ def create_app() -> Dash:
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug = True)
