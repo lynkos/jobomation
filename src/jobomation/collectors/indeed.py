@@ -93,24 +93,15 @@ load_dotenv()
 class IndeedCollector(Collector):
     source = "indeed"
     api_url = "https://apis.indeed.com/graphql"
-    base_url = "https://www.indeed.com"
-    default_radius = 50
 
-    def __init__(
-        self,
-        *,
-        search_term: str,
-        location: str,
-        results_wanted: int = 100,
-        radius: int = default_radius
-    ) -> None:
+    def __init__(self, *, search_term: str, location: str, results_wanted: int = 100, radius: int = 50) -> None:
         self.search_term = search_term
         self.location = location
         self.results_wanted = results_wanted
         self.radius = radius
 
     def _send_request(self, cursor: str | None = None) -> Response:
-        query = self._build_query(search_term = self.search_term, location = self.location, cursor = cursor, radius = self.radius)
+        query = self._build_query(search_term = self.search_term, location = self.location, cursor = cursor)
 
         return post_request(
             self.api_url,
@@ -139,7 +130,7 @@ class IndeedCollector(Collector):
             "indeed-app-info": "appv=193.1; appid=com.indeed.jobsearch; osv=16.6.1; os=ios; dtype=phone",
         }
 
-    def _build_query(self, search_term: str | None = None, location: str | None = None, cursor: str | None = None, radius: int = default_radius) -> str:
+    def _build_query(self, search_term: str | None = None, location: str | None = None, cursor: str | None = None) -> str:
         what = ""
         location_query = ""
         cursor_query = ""
@@ -152,7 +143,7 @@ class IndeedCollector(Collector):
             escaped = location.replace('"', '\\"')
             location_query = (
                 f'location: {{where: "{escaped}", '
-                f'radius: {radius}, radiusUnit: MILES}}'
+                f'radius: {self.radius}, radiusUnit: MILES}}'
             )
 
         if cursor: cursor_query = f'cursor: "{cursor}"'
@@ -168,9 +159,10 @@ class IndeedCollector(Collector):
         if timestamp_ms is None: return ""
         return datetime.fromtimestamp(timestamp_ms / 1000, timezone.utc).isoformat()
 
-    def _raw_to_compensation(self, raw: dict) -> Compensation | None:
+    @staticmethod
+    def _raw_to_compensation(raw: dict) -> Compensation | None:
         if not raw["baseSalary"] and not raw["estimated"]: return None
-        comp = (raw["baseSalary"] if raw["baseSalary"] else raw["estimated"]["baseSalary"])
+        comp = raw["baseSalary"] if raw["baseSalary"] else raw["estimated"]["baseSalary"]
         if not comp: return None
         
         min_range = comp["range"].get("min")
@@ -209,7 +201,7 @@ class IndeedCollector(Collector):
             title = raw["title"],
             company = employer.get("name") or "",
             location = formatted_location,
-            url = f"{self.base_url}/viewjob?jk={raw['key']}",
+            url = f"https://www.indeed.com/viewjob?jk={raw['key']}",
             first_published = self._format_timestamp(raw.get("datePublished")),
             updated_at = None,
             description = clean_description(description.get("html", "")),

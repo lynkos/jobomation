@@ -26,15 +26,10 @@ def main() -> None:
         save_jobs(jobs)
         filtered_count = sum(job.filtered for job in jobs)
 
-        print(
-            f"{target.name}: "
-            f"{len(jobs)} collected, "
-            f"{filtered_count} filtered, "
-            f"{len(jobs) - filtered_count} visible"
-        )
+        print(f"{target.name}: {len(jobs)} collected, {filtered_count} filtered, {len(jobs) - filtered_count} visible")
 
         # Get specific Twitch job
-        # job = fetch_job(TWITCH, 8623401002)
+        # job = fetch_job("twitch", 8623401002)
         # save_job(job)
         # print(f"Saved {job.title} in {job.location} to database")
 
