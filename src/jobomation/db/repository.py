@@ -3,7 +3,7 @@ from jobomation.db.connection import connect
 from jobomation.db.mapping import job_to_record, row_to_job
 from jobomation.models import Job
 
-UPSERT_IMMUTABLE_COLUMNS = {
+UPSERT_EXCLUDED_COLUMNS = {
     "source",
     "source_job_id",
     "first_seen_at",
@@ -25,7 +25,7 @@ def _build_upsert_query(columns: tuple[str, ...]) -> str:
     column_list = ", ".join(columns)
     placeholders = ", ".join(f":{column}" for column in columns)
 
-    update_columns = (column for column in columns if column not in UPSERT_IMMUTABLE_COLUMNS)
+    update_columns = (column for column in columns if column not in UPSERT_EXCLUDED_COLUMNS)
 
     updates = ",\n".join(
         f"{column} = excluded.{column}"
