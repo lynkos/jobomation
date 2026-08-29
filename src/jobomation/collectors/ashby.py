@@ -3,14 +3,36 @@ from jobomation.models import Collector
 from jobomation.models import Compensation, Job
 
 class AshbyCollector(Collector):
-    source = "ashby"
-    api_url = "https://api.ashbyhq.com/posting-api/job-board"
+    """
+    Collect job postings from Ashby board and normalize them into jobomation Job model.
+
+    Attributes:
+        source (str): Job source identifier.
+        api_url (str): Base URL for Ashby job board API.
+    """
+    source: str = "ashby"
+    api_url: str = "https://api.ashbyhq.com/posting-api/job-board"
 
     def __init__(self, board: str) -> None:
-        self.board = board
+        """
+        Initialize Ashby collector for given job board.
+
+        Args:
+            board (str): Ashby board identifier used to query jobs.
+        """
+        self.board: str = board
 
     @staticmethod
     def _raw_to_compensation(raw: dict) -> Compensation:
+        """
+        Convert Ashby compensation payload to normalized jobomation Compensation object.
+        
+        Args:
+            raw (dict): Raw compensation data from Ashby.
+
+        Returns:
+            Compensation: Compensation object populated from raw compensation data.
+        """
         min_amount = max_amount = currency = interval = None
 
         for component in raw["summaryComponents"]:
@@ -30,6 +52,15 @@ class AshbyCollector(Collector):
         )
 
     def _raw_to_job(self, raw: dict) -> Job:
+        """
+        Convert Ashby job payload to normalized jobomation Job object.
+
+        Args:
+            raw (dict): Raw job data from Ashby.
+
+        Returns:
+            Job: Job object populated from raw job data, including parsed compensation information.
+        """
         return Job(
             source = self.source,
             source_job_id = raw["id"],
@@ -44,6 +75,12 @@ class AshbyCollector(Collector):
         )
 
     def _send_request(self) -> Response:
+        """
+        Send `GET` request to API for configured Ashby job board.
+
+        Returns:
+            Response: Raw HTTP response from Ashby.
+        """
         return get_request(
             url = f"{self.api_url}/{self.board}",
             params = { "includeCompensation": "true" },
@@ -51,6 +88,11 @@ class AshbyCollector(Collector):
         )
 
     def fetch_jobs(self) -> list[Job]:
-        raw_jobs = self.get_response()["jobs"]
+        """
+        Fetch and normalize all jobs for configured Ashby board.
 
-        return [self._raw_to_job(raw) for raw in raw_jobs]
+        Returns:
+            list[Job]: List of Job objects converted from raw job payloads returned by Ashby API.
+        """
+        raw_jobs = self.get_response()["jobs"]
+        return [ self._raw_to_job(raw) for raw in raw_jobs ]

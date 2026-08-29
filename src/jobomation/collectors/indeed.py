@@ -87,20 +87,46 @@ query GetJobData {{
     }}
 }}
 """
+"""GraphQL query to search for"""
 
 load_dotenv()
 
 class IndeedCollector(Collector):
+    """
+    Collect job postings from Indeed and normalize them into jobomation Job model.
+
+    Attributes:
+        source (str): Job source identifier.
+        api_url (str): Base URL for Indeed GraphQL API.
+    """
     source = "indeed"
     api_url = "https://apis.indeed.com/graphql"
 
     def __init__(self, *, search_term: str, location: str, results_wanted: int = 100, radius: int = 50) -> None:
-        self.search_term = search_term
-        self.location = location
-        self.results_wanted = results_wanted
-        self.radius = radius
+        """
+        Initialize Indeed collector for given search configuration.
+
+        Args:
+            search_term (str): Job search query string to submit to Indeed.
+            location (str): Geographic location used for job search.
+            results_wanted (int, optional): Maximum number of results to fetch. Defaults to 100.
+            radius (int, optional): Search radius in miles around location. Defaults to 50.
+        """
+        self.search_term: str = search_term
+        self.location: str = location
+        self.results_wanted: int = results_wanted
+        self.radius: int = radius
 
     def _send_request(self, cursor: str | None = None) -> Response:
+        """
+        Send `POST` request to Indeed GraphQL API for current search.
+
+        Args:
+            cursor (str | None, optional): Pagination cursor for continuing current result set. Defaults to None.
+
+        Returns:
+            Response: Raw HTTP response from Indeed.
+        """
         query = self._build_query(search_term = self.search_term, location = self.location, cursor = cursor)
 
         return post_request(
@@ -111,13 +137,31 @@ class IndeedCollector(Collector):
         )
 
     def _fetch_page(self, cursor: str | None = None) -> tuple[list[dict], str | None]:
+        """
+        Fetch one page of job results for GraphQL search query.
+
+        Args:
+            cursor (str | None, optional): Pagination cursor for next page of results. Defaults to None.
+
+        Returns:
+            tuple[list[dict], str | None]: Current page's job entries and next pagination cursor (if applicable).
+        """
         job_search = self.get_response(cursor)["data"]["jobSearch"]
         return (job_search["results"], job_search["pageInfo"]["nextCursor"])
 
     def _headers(self) -> dict[str, str]:
+        """
+        Build HTTP headers required for Indeed GraphQL requests.
+
+        Raises:
+            CollectorConfigError: If `INDEED_API_KEY` isn't configured in environment.
+
+        Returns:
+            dict[str, str]: Headers containing API key and required metadata for request.
+        """
         api_key = getenv("INDEED_API_KEY")
         
-        if not api_key: raise CollectorConfigError("No Indeed API Key found!")
+        if not api_key: raise CollectorConfigError("`INDEED_API_KEY` not found!")
         
         return {
             "content-type": "application/json",
@@ -131,6 +175,17 @@ class IndeedCollector(Collector):
         }
 
     def _build_query(self, search_term: str | None = None, location: str | None = None, cursor: str | None = None) -> str:
+        """
+        Build GraphQL query used to search for jobs on Indeed.
+
+        Args:
+            search_term (str | None, optional): Job search keywords. Defaults to None.
+            location (str | None, optional): Search location. Defaults to None.
+            cursor (str | None, optional): Pagination cursor for continuing a result set. Defaults to None.
+
+        Returns:
+            str: Formatted GraphQL query string for Indeed job search.
+        """
         what = ""
         location_query = ""
         cursor_query = ""
@@ -156,11 +211,30 @@ class IndeedCollector(Collector):
         )
 
     def _format_timestamp(self, timestamp_ms: int | None) -> str:
+        """
+        Convert millisecond timestamp to ISO UTC string.
+
+        Args:
+            timestamp_ms (int | None): Timestamp in milliseconds, or None if not applicable.
+
+        Returns:
+            str: Formatted UTC datetime string, or empty string if not applicable.
+        """
         if timestamp_ms is None: return ""
         return datetime.fromtimestamp(timestamp_ms / 1000, timezone.utc).isoformat()
 
     @staticmethod
     def _raw_to_compensation(raw: dict) -> Compensation | None:
+        """
+        Convert Indeed compensation payload to normalized jobomation Compensation object (if applicable).
+
+        Args:
+            raw (dict): Raw compensation data from Indeed.
+
+        Returns:
+            Compensation | None: Compensation object populated from raw compensation data (if applicable).
+        """
+        if not raw: return None
         if not raw["baseSalary"] and not raw["estimated"]: return None
         comp = raw["baseSalary"] if raw["baseSalary"] else raw["estimated"]["baseSalary"]
         if not comp: return None
@@ -177,13 +251,22 @@ class IndeedCollector(Collector):
         )
 
     def _raw_to_job(self, raw: dict) -> Job:
-        location = raw.get("location") or {}
-        employer = raw.get("employer") or {}
-        description = raw.get("description") or {}
-        compensation = raw.get("compensation") or {}
+        """
+        Convert Indeed job payload to normalized jobomation Job object.
+
+        Args:
+            raw (dict): Raw job data from Indeed.
+
+        Returns:
+            Job: Job object populated from raw job data, including parsed compensation information.
+        """
+        location = raw.get("location") or { }
+        employer = raw.get("employer") or { }
+        description = raw.get("description") or { }
+        compensation = raw.get("compensation") or { }
 
         formatted_location = (
-            location.get("formatted", {}).get("long")
+            location.get("formatted", { }).get("long")
             or ", ".join(
                 part
                 for part in (
@@ -205,10 +288,16 @@ class IndeedCollector(Collector):
             first_published = self._format_timestamp(raw.get("datePublished")),
             updated_at = None,
             description = clean_description(description.get("html", "")),
-            compensation = self._raw_to_compensation(compensation) if compensation else None
+            compensation = self._raw_to_compensation(compensation)
         )
 
     def fetch_jobs(self) -> list[Job]:
+        """
+        Fetch and normalize all jobs for configured Indeed search term.
+        
+        Returns:
+            list[Job]: List of Job objects converted from raw job payloads returned by Indeed API.
+        """
         jobs: list[Job] = []
         seen_ids: set[str] = set()
         cursor: str | None = None
