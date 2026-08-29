@@ -5,6 +5,15 @@ from jobomation.db.repository import save_jobs, save_job, get_job, get_jobs, cou
 from jobomation.db.schema import initialize_database
 
 def main() -> None:
+    """
+    Initialize database and process each configured job source.
+
+    1. Loads configured targets and filters
+    2. Fetches jobs from each collector
+    3. Filters results
+    4. Saves results to database
+    5. Prints brief summary for each source
+    """
     initialize_database()
 
     targets = load_targets()
