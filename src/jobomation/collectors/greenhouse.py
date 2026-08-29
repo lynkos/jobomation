@@ -41,7 +41,7 @@ class GreenhouseCollector(Collector):
             max_amount = pay["max_cents"] / 100,
             currency = pay["currency_type"],
             interval = None,
-            description = f"{pay["title"]} -- {pay["blurb"]}"
+            description = f"{pay["title"]} -- {clean_description(pay["blurb"])}"
         )
 
     def _raw_to_job(self, raw: dict) -> Job:
