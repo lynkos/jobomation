@@ -3,6 +3,17 @@ from datetime import datetime
 from jobomation.models import Compensation, Job
 
 def job_to_record(job: Job, *, seen_at: datetime) -> dict[str, object]:
+    """
+    Convert Job model to row data for database inserts.
+
+    Args:
+        job (Job): Job model to serialize.
+        seen_at (datetime): Timestamp used to track when row's created.
+
+    Returns:
+        dict[str, object]: Dictionary keyed by database column names with normalized
+        fields for job, compensation details, and current activity/filter metadata.
+    """
     compensation = job.compensation
 
     return {
@@ -27,10 +38,20 @@ def job_to_record(job: Job, *, seen_at: datetime) -> dict[str, object]:
 
         "active": int(job.active),
         "filtered": int(job.filtered),
-        "filter_reason": job.filter_reason,
+        "filter_reason": job.filter_reason
     }
 
 def row_to_compensation(row: Row) -> Compensation | None:
+    """
+    Rebuild Compensation object from job compensation columns in a row.
+
+    Args:
+        row (Row): SQLite row containing compensation columns for a job.
+
+    Returns:
+        Compensation | None: Compensation object if any compensation value is present,
+        else None when every compensation field is null.
+    """
     if all(
         row[column] is None
         for column in (
@@ -38,7 +59,7 @@ def row_to_compensation(row: Row) -> Compensation | None:
             "compensation_max_amount",
             "compensation_currency",
             "compensation_interval",
-            "compensation_description",
+            "compensation_description"
         )
     ):
         return None
@@ -48,10 +69,19 @@ def row_to_compensation(row: Row) -> Compensation | None:
         max_amount = row["compensation_max_amount"],
         currency = row["compensation_currency"],
         interval = row["compensation_interval"],
-        description = row["compensation_description"],
+        description = row["compensation_description"]
     )
 
 def row_to_job(row: Row) -> Job:
+    """
+    Rebuild Job object from SQLite row.
+
+    Args:
+        row (Row): Row containing serialized job fields, activity flags, and compensation columns.
+
+    Returns:
+        Job: Job populated from row with ISO timestamps and compensation.
+    """
     return Job(
         source = row["source"],
         source_job_id = row["source_job_id"],
@@ -71,4 +101,13 @@ def row_to_job(row: Row) -> Job:
     )
 
 def _parse_datetime(value: str | None) -> datetime | None:
+    """
+    Parse ISO-formatted datetime string to datetime.
+
+    Args:
+        value (str | None): ISO timestamp string from database, or None.
+
+    Returns:
+        datetime | None: Parsed datetime object if value is present, else None.
+    """
     return datetime.fromisoformat(value) if value is not None else None
