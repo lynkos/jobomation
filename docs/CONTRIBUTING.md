@@ -49,12 +49,17 @@ Small bug fixes, documentation improvements, and other narrowly scoped changes g
    python -m pip install -e ".[dev]"
    ```
 
-8. Fetch job postings from [targets](../config/targets.yml) and add to SQLite database
+8. Create a `.env` file in the root directory and add your Indeed API key
+   ```sh
+   INDEED_API_KEY="your_indeed_api_key"
+   ```
+
+9. Fetch job postings from [targets](../config/targets.yml) and add to SQLite database
    ```sh
    python -m jobomation.main
    ```
 
-9. Run dashboard
+10. Run dashboard
    ```sh
    python -m jobomation.dashboard.app
    ```

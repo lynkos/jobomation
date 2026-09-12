@@ -93,6 +93,11 @@ Jobomation is a local-first tool for discovering, evaluating, and managing job o
    python -m pip install -e ".[dev]"
    ```
 
+8. Create a `.env` file in the root directory and add your Indeed API key
+   ```sh
+   INDEED_API_KEY="your_indeed_api_key"
+   ```
+
 ## Usage
 Fetch job postings from [targets](../config/targets.yml) and add to SQLite database
    ```sh
