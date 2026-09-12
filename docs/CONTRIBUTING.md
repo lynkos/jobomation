@@ -49,6 +49,16 @@ Small bug fixes, documentation improvements, and other narrowly scoped changes g
    python -m pip install -e ".[dev]"
    ```
 
+8. Fetch job postings from [targets](../config/targets.yml) and add to SQLite database
+   ```sh
+   python -m jobomation.main
+   ```
+
+9. Run dashboard
+   ```sh
+   python -m jobomation.dashboard.app
+   ```
+
 ### Testing
 To run all tests:
    ```sh
