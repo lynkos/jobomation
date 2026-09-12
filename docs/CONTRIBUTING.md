@@ -107,9 +107,6 @@ Avoid force-pushing after review has begun unless necessary, since rewriting his
 
 Not every proposed implementation is guaranteed to be merged, particularly while parts of Jobomation's architecture are still evolving. Discussing substantial design decisions before implementation can help avoid unnecessary work.
 
-### Creating Issues
-Before opening a new issue, please search [existing issues](https://github.com/lynkos/jobomation/issues) to see whether the topic has already been discussed.
-
 #### Bug Reports
 Bug reports should include enough information to reproduce the problem where possible.
 
