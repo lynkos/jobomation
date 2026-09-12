@@ -116,16 +116,21 @@ For one subsystem, such as [`models.py`](../src/jobomation/models.py):
    ```
 
 ## Miscellaneous
+### Database Schema
+<div align="center"><img alt="SQLite database schema" src="../assets/schema.svg"></div>
+
 ### Design Doc
 See [Design Doc](DESIGN.md) for more details.
 
-### Database Schema
-<div align="center"><img alt="SQLite database schema" src="../assets/schema.svg"></div>
+### Contributing
+See [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
 ### Directory Tree
 <details open>
 <pre>
 .
+├── .github/
+│   └── pull_request_template.md
 ├── .vscode/
 │   └── settings.json
 ├── assets/
@@ -139,6 +144,7 @@ See [Design Doc](DESIGN.md) for more details.
 ├── data/
 │   └── jobomation.db
 ├── docs/
+│   ├── CONTRIBUTING.md
 │   ├── DESIGN.md
 │   └── README.md
 ├── src/
@@ -155,6 +161,7 @@ See [Design Doc](DESIGN.md) for more details.
 │       ├── db/
 │       │   ├── __init__.py
 │       │   ├── connection.py
+│       │   ├── mapping.py
 │       │   ├── repository.py
 │       │   └── schema.py
 │       ├── filtering/
@@ -162,6 +169,7 @@ See [Design Doc](DESIGN.md) for more details.
 │       │   └── rules.py
 │       ├── __init__.py
 │       ├── config.py
+│       ├── exceptions.py
 │       ├── main.py
 │       └── models.py
 ├── tests/
@@ -173,6 +181,7 @@ See [Design Doc](DESIGN.md) for more details.
 │   ├── test_filtering.py
 │   ├── test_main.py
 │   └── test_models.py
+├── .env
 ├── .gitignore
 ├── environment.yml
 ├── LICENSE.md
